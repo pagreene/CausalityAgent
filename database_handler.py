@@ -30,8 +30,11 @@ class DatabaseHandler:
         self.populate_correlation_table()
         self.populate_causality_table()
         self.populate_mutsig_table()
-        # self.populate_unexplained_table()
+        self.populate_unexplained_table()
         self.populate_explained_table()
+        self.populate_sif_relations_table()
+
+
 
     def populate_causality_table(self):
         opposite_rel = {
@@ -130,16 +133,16 @@ class DatabaseHandler:
         mutsig_file = open("./resources/scores-mutsig.txt", 'r')
         with self.cadb:
             cur = self.cadb.cursor()
+            cur.execute("DROP TABLE IF EXISTS MutSig")
             try:
-                cur.execute(
-                    "CREATE TABLE MutSig(Id TEXT,  PVal REAL)")
+                cur.execute("CREATE TABLE MutSig(Id TEXT,  PVal REAL)")
             except:
                 pass
 
-            # skip first line
             for line in mutsig_file:
-                gene_id = line[1]
-                p_val = line[17]
+                vals = line.split('\t')
+                gene_id = vals[1]
+                p_val = vals[17]
                 cur.execute("INSERT INTO MutSig VALUES(?, ?)", (gene_id,  p_val))
 
         mutsig_file.close()
@@ -165,6 +168,24 @@ class DatabaseHandler:
                         "AND Causality.PSite1 = Correlations.PSite1 AND Causality.PSite2 = Correlations.PSite2 "
                         "WHERE Rel IS NULL",
                         ).fetchall()
+
+    #All sif relations from PathwayCommons
+    def populate_sif_relations_table(self):
+        pc_file = open("./resources/PC.sif", 'r')
+        with self.cadb:
+            cur = self.cadb.cursor()
+            cur.execute("DROP TABLE IF EXISTS Sif_Relations")
+            cur.execute("CREATE TABLE Sif_Relations(Id1 TEXT,  Id2 TEXT, Rel TEXT)")
+            for line in pc_file:
+                vals = line.split('\t')
+                id1 = vals[0].upper()
+                id2 = (vals[2].rstrip('\n')).upper()
+                rel = vals[1]
+                cur.execute("INSERT INTO Sif_Relations VALUES(?, ?, ?)", (id1, id2, rel))
+
+        pc_file.close()
+
+
 
     # Convert the row from sql table into causality object
     @staticmethod
@@ -283,6 +304,31 @@ class DatabaseHandler:
             else:
                 return ''
 
+    def find_mut_sig(self, gene):
+        with self.cadb:
+            cur = self.cadb.cursor()
+            p_val = cur.execute("SELECT PVal FROM MutSig WHERE Id = ?", (gene,)).fetchone()
+
+            if p_val[0] < 0.01:
+                return "highly significant"
+            elif p_val[0] < 0.05:
+                return "significant"
+            else:
+                return "not significant"
+
+    # Find common upstreams between gene1 and gene2
+    def find_common_upstreams(self, gene1, gene2):
+        with self.cadb:
+            cur = self.cadb.cursor()
+
+            upstreams = cur.execute("SELECT s1.Id1 FROM Sif_Relations s1 "
+                                    "INNER JOIN Sif_Relations s2 ON (s2.Id1 = s1.Id1 AND s1.Id2 = ? AND s2.id2 = ? AND  "
+                                    "s1.Rel = 'controls-state-change-of' AND s2.Rel = s1.Rel)",
+                                    (gene1, gene2)).fetchall()
+
+
+            return upstreams
+
     #debug method
     def find_all_correlations(self, gene):
         with self.cadb:
@@ -298,8 +344,10 @@ def print_result(res):
     print(res)
 db = DatabaseHandler()
 # db.find_causality_targets('AKT1', print_result)
+#
+# db.populate_mutsig_table()
+# db.populate_sif_relations_table()
 
-# db.populate_unexplained_table()
 # db.populate_explained_table()
 # db.find_next_unexplained_correlation('AKT1', print_result)
 # db.find_next_unexplained_correlation('AKT1', print_result)
@@ -313,4 +361,5 @@ db = DatabaseHandler()
 # # db.find_next_correlation('AKT1',print_result)
 # db.find_correlation_between('AKT1', 'BRAF')
 # db.find_all_correlations('AKT1')
-
+# print(db.find_mut_sig('TP53'))
+# db.find_common_upstreams('RAC1', 'RAC2')
