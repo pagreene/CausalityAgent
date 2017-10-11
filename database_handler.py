@@ -317,7 +317,7 @@ class DatabaseHandler:
                 return "not significant"
 
     # Find common upstreams between gene1 and gene2
-    def find_common_upstreams(self, gene1, gene2):
+    def find_common_upstreams(self, gene1, gene2, callback):
         with self.cadb:
             cur = self.cadb.cursor()
 
@@ -327,7 +327,7 @@ class DatabaseHandler:
                                     (gene1, gene2)).fetchall()
 
 
-            return upstreams
+            callback(upstreams)
 
     #debug method
     def find_all_correlations(self, gene):

@@ -56,6 +56,7 @@ class CausalityAgent:
         self.socket_s.on('findCausality', self.db_handler.find_causality)
         self.socket_s.on('findCausalityTargets', self.db_handler.find_causality_targets)
         self.socket_s.on('findCorrelation', self.db_handler.find_next_correlation)
+        self.socket_s.on('findCommonUpstreams', self.db_handler.find_common_upstreams)
         self.socket_s.on('reconnect', self.connect_sbgnviz)
         self.socket_s.emit(event, user_info)
         self.socket_s.emit('agentNewFileRequest', {'room': self.room_id})
