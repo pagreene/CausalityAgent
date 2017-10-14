@@ -1,19 +1,14 @@
-import re
 import os
-import logging
 import sqlite3
-import numpy as np
-import socket
 import logging
-import uuid
 
 
 class DatabaseHandler:
-    def __init__(self):
+    def __init__(self, path):
         self.corr_ind = 0
         self.causality_ind = 0
 
-        db_file = './resources/pnnl-dataset.db'
+        db_file = path + 'resources/pnnl-dataset.db'
         if os.path.isfile(db_file):
             self.cadb = sqlite3.connect(db_file)
         else:
@@ -317,9 +312,16 @@ class DatabaseHandler:
                 return "not significant"
 
     # Find common upstreams between gene1 and gene2
-    def find_common_upstreams(self, gene1, gene2, callback):
+    def find_common_upstreams(self, genes, callback):
         with self.cadb:
             cur = self.cadb.cursor()
+
+            if len(genes) < 2:
+                callback('')
+                return
+
+            gene1 = genes[0]
+            gene2 = genes[1]
 
             upstreams = cur.execute("SELECT s1.Id1 FROM Sif_Relations s1 "
                                     "INNER JOIN Sif_Relations s2 ON (s2.Id1 = s1.Id1 AND s1.Id2 = ? AND s2.id2 = ? AND  "
@@ -327,7 +329,26 @@ class DatabaseHandler:
                                     (gene1, gene2)).fetchall()
 
 
-            callback(upstreams)
+            for i in range(2, len(genes)):
+                gene = genes[i]
+
+
+                upstream_arr = []
+                for upstream in upstreams:
+                    upstream_arr.append(upstream[0])
+
+                query = "SELECT Id1 FROM Sif_Relations WHERE Rel = 'controls-state-change-of' AND Id2 = ? AND Id1 IN (" \
+                        + ", ".join((("'"+str(upstream)+"'") for upstream in upstream_arr)) + ")"
+
+                upstreams = cur.execute(query, (gene,)).fetchall()
+
+
+            #format upstreams
+            upstream_list = []
+            for genes in upstreams:
+                upstream_list.append({'name': genes[0]})
+
+            callback(upstream_list)
 
     #debug method
     def find_all_correlations(self, gene):
@@ -342,7 +363,8 @@ class DatabaseHandler:
 #test
 def print_result(res):
     print(res)
-db = DatabaseHandler()
+# db = DatabaseHandler('./')
+
 # db.find_causality_targets('AKT1', print_result)
 #
 # db.populate_mutsig_table()
@@ -363,3 +385,4 @@ db = DatabaseHandler()
 # db.find_all_correlations('AKT1')
 # print(db.find_mut_sig('TP53'))
 # db.find_common_upstreams('RAC1', 'RAC2')
+# db.find_common_upstreams(['AKT1', 'BRAF', 'MAPK1'], print_result)

@@ -1,10 +1,5 @@
-import re
-import os
 import logging
-import sqlite3
-import numpy as np
-import socket
-import logging
+import sys
 import uuid
 from socketIO_client import SocketIO
 import database_handler
@@ -19,9 +14,14 @@ class CausalityAgent:
         self.color_code = '#ff46a7'
         self.room_id = ''
         self.current_users = []
+        if len(sys.argv) == 1:
+            path = './'
+        else:
+            path = sys.argv[1]
 
-        self.db_handler = database_handler.DatabaseHandler()
+        self.db_handler = database_handler.DatabaseHandler(path)
         self.connect_sbgnviz()
+
 
     def __del__(self):
         self.db_handler.__del__
@@ -64,17 +64,6 @@ class CausalityAgent:
 
     def on_user_list(self, user_list):
         self.current_users = user_list
-
-    # def on_sbgnviz_message(self, data):
-    #     if not isinstance(data, dict):
-    #         return
-    #     comment = data.get('comment')
-    #     if isinstance(comment, list):
-    #         comment = comment[0]
-    #     if isinstance(comment, dict):
-    #         comment = comment.get('text')
-    #
-    #     print(comment)
 
 
 agent = CausalityAgent()
