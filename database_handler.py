@@ -8,7 +8,7 @@ class DatabaseHandler:
         self.corr_ind = 0
         self.causality_ind = 0
 
-        db_file = path + 'resources/pnnl-dataset.db'
+        db_file = os.path.join(path, 'pnnl-dataset.db')
         if os.path.isfile(db_file):
             self.cadb = sqlite3.connect(db_file)
         else:
