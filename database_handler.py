@@ -172,7 +172,7 @@ class DatabaseHandler:
 
     #All sif relations from PathwayCommons
     def populate_sif_relations_table(self, path):
-        pc_path = os.path.join(path, 'PC.sif"')
+        pc_path = os.path.join(path, 'PC.sif')
         pc_file = open(pc_path, 'r')
 
         with self.cadb:
