@@ -7,22 +7,7 @@ import os
 import threading
 
 
-def set_interval(func, sec):
-    def func_wrapper():
-        set_interval(func, sec)
-        func()
-
-    t = threading.Timer(sec, func_wrapper)
-    t.start()
-    print("timer called")
-    return t
-
 _resource_dir = os.path.dirname(os.path.realpath(__file__)) + '/resources/'
-
-class UncreatedDocumentException(Exception):
-    def __init__(self, *args, **kwargs):
-        print("SBGNViz client is not connected.");
-        Exception.__init__(self, *args, **kwargs)
 
 class CausalityAgent:
 
@@ -55,14 +40,10 @@ class CausalityAgent:
         self.socket_s.emit('disconnect')
         self.socket_s.disconnect()
 
-
     def connect_sbgnviz(self):
         # Initialize sockets
         self.socket_s = SocketIO('localhost', self.sbgnviz_port)
-
         self.socket_s.emit('agentCurrentRoomRequest', self.on_subscribe)
-
-        # self.conn_req = set_interval(self.send_connection_request, 5)
 
     def send_connection_request(self):
         self.socket_s.emit('agentCurrentRoomRequest', self.on_subscribe)

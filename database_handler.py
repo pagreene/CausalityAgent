@@ -25,10 +25,10 @@ class DatabaseHandler:
         self.populate_correlation_table(path)
         self.populate_causality_table(path)
         self.populate_mutsig_table(path)
-        self.populate_unexplained_table(path)
-        self.populate_explained_table(path)
+        self.populate_unexplained_table()
+        self.populate_explained_table()
         self.populate_sif_relations_table(path)
-
+        # self.populate_mutex_table(path)
 
 
     def populate_causality_table(self, path):
@@ -146,6 +146,8 @@ class DatabaseHandler:
 
         mutsig_file.close()
 
+
+
     # Find the correlations with a causal explanation
     def populate_explained_table(self):
         with self.cadb:
@@ -186,6 +188,36 @@ class DatabaseHandler:
 
         pc_file.close()
 
+    # def populate_mutex_table(self, path):
+    #     mutex_file = os.path.join(path, 'ranked-groups.txt')
+    #     mutex_file = open(mutsig_path, 'r')
+    #
+    #     genes = []
+    #     for line in mutsig_file:
+    #         vals = line.split('\t')
+    #         score = vals[0]
+    #         for i in range(2, len(vals)):
+    #             genes.append
+    #
+    #     with self.cadb:
+    #         cur = self.cadb.cursor()
+    #         cur.execute("DROP TABLE IF EXISTS Mutex")
+    #         try:
+    #             cur.execute("CREATE TABLE Mutex(Id1 TEXT, Id1 TEXT, Score REAL)")
+    #         except:
+    #             pass
+    #
+    #         for line in mutsig_file:
+    #             vals = line.split('\t')
+    #             score = vals[0]
+    #             for i in range(2, len(vals)):
+    #                 gene = vals[i]
+    #                 exists = cur.execute("SELECT * FROM Mutex WHERE Id1 = gene", (gene,)).fetchall()
+    #
+    #
+    #                 cur.execute("INSERT INTO MutSig VALUES(?, ?)", (gene_id,  p_val))
+    #
+    #     mutex_file.close()
 
 
     # Convert the row from sql table into causality object
