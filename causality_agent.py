@@ -4,6 +4,10 @@ import uuid
 from socketIO_client import SocketIO
 import database_handler
 
+class UncreatedDocumentException(Exception):
+    def __init__(self, *args, **kwargs):
+        print("SBGNViz client is not connected.");
+        Exception.__init__(self, *args, **kwargs)
 
 class CausalityAgent:
 
@@ -43,24 +47,30 @@ class CausalityAgent:
 
     def on_subscribe(self, room):
         event = 'subscribeAgent'
-        self.room_id = room
 
-        print('Reconnecting ' + room)
+        if room is None:
+            raise UncreatedDocumentException
+        else:
+            self.room_id = room
 
-        user_info = {'userName': self.user_name,
-                     'room': self.room_id,
-                     'userId': self.user_id,
-                     'colorCode': self.color_code}
+            print('Reconnecting ' + room)
 
-        # self.socket_s.on('message', self.on_sbgnviz_message)
-        self.socket_s.on('findCausality', self.db_handler.find_causality)
-        self.socket_s.on('findCausalityTargets', self.db_handler.find_causality_targets)
-        self.socket_s.on('findCorrelation', self.db_handler.find_next_correlation)
-        self.socket_s.on('findCommonUpstreams', self.db_handler.find_common_upstreams)
-        self.socket_s.on('reconnect', self.connect_sbgnviz)
-        self.socket_s.emit(event, user_info)
-        self.socket_s.emit('agentNewFileRequest', {'room': self.room_id})
-        self.socket_s.emit('agentConnectToTripsRequest', user_info)
+            user_info = {'userName': self.user_name,
+                         'room': self.room_id,
+                         'userId': self.user_id,
+                         'colorCode': self.color_code}
+
+            # self.socket_s.on('message', self.on_sbgnviz_message)
+            self.socket_s.on('findCausality', self.db_handler.find_causality)
+            self.socket_s.on('findCausalityTargets', self.db_handler.find_causality_targets)
+            self.socket_s.on('findCorrelation', self.db_handler.find_next_correlation)
+            self.socket_s.on('findCommonUpstreams', self.db_handler.find_common_upstreams)
+            self.socket_s.on('reconnect', self.connect_sbgnviz)
+            self.socket_s.emit(event, user_info)
+            self.socket_s.emit('agentNewFileRequest', {'room': self.room_id})
+            self.socket_s.emit('agentConnectToTripsRequest', user_info)
+
+
 
     def on_user_list(self, user_list):
         self.current_users = user_list
