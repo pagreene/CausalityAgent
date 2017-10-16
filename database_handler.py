@@ -16,22 +16,22 @@ class DatabaseHandler:
             fp = open(db_file, 'w')
             fp.close()
             self.cadb = sqlite3.connect(db_file)
-            self.populate_tables()
+            self.populate_tables(path)
 
     def __del__(self):
         self.cadb.close()
 
-    def populate_tables(self):
-        self.populate_correlation_table()
-        self.populate_causality_table()
-        self.populate_mutsig_table()
-        self.populate_unexplained_table()
-        self.populate_explained_table()
-        self.populate_sif_relations_table()
+    def populate_tables(self, path):
+        self.populate_correlation_table(path)
+        self.populate_causality_table(path)
+        self.populate_mutsig_table(path)
+        self.populate_unexplained_table(path)
+        self.populate_explained_table(path)
+        self.populate_sif_relations_table(path)
 
 
 
-    def populate_causality_table(self):
+    def populate_causality_table(self, path):
         opposite_rel = {
             'phosphorylates': 'is-phosphorylated-by',
             'dephosphorylates': 'is-dephosphorylated-by',
@@ -39,7 +39,8 @@ class DatabaseHandler:
             'downregulates-expression': 'expression-is-downregulated-by',
         }
 
-        causality_file = open("./resources/causative-data-centric.sif", 'r')
+        causality_path = os.path.join(path, 'causative-data-centric.sif')
+        causality_file = open(causality_path, 'r')
 
         with self.cadb:
             cur = self.cadb.cursor()
@@ -86,8 +87,9 @@ class DatabaseHandler:
 
         causality_file.close()
 
-    def populate_correlation_table(self):
-        pnnl_file = open("./resources/PNNL-ovarian-correlations.txt", 'r')
+    def populate_correlation_table(self, path):
+        pnnl_path = os.path.join(path, 'PNNL-ovarian-correlations.txt')
+        pnnl_file = open(pnnl_path, 'r')
 
         with self.cadb:
             cur = self.cadb.cursor()
@@ -124,8 +126,10 @@ class DatabaseHandler:
 
         pnnl_file.close()
 
-    def populate_mutsig_table(self):
-        mutsig_file = open("./resources/scores-mutsig.txt", 'r')
+    def populate_mutsig_table(self, path):
+        mutsig_path = os.path.join(path, 'scores-mutsig.txt')
+        mutsig_file = open(mutsig_path, 'r')
+
         with self.cadb:
             cur = self.cadb.cursor()
             cur.execute("DROP TABLE IF EXISTS MutSig")
@@ -165,8 +169,10 @@ class DatabaseHandler:
                         ).fetchall()
 
     #All sif relations from PathwayCommons
-    def populate_sif_relations_table(self):
-        pc_file = open("./resources/PC.sif", 'r')
+    def populate_sif_relations_table(self, path):
+        pc_path = os.path.join(path, 'PC.sif"')
+        pc_file = open(pc_path, 'r')
+
         with self.cadb:
             cur = self.cadb.cursor()
             cur.execute("DROP TABLE IF EXISTS Sif_Relations")
