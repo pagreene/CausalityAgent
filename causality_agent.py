@@ -4,6 +4,18 @@ import uuid
 from socketIO_client import SocketIO
 import database_handler
 import os
+import threading
+
+
+def set_interval(func, sec):
+    def func_wrapper():
+        set_interval(func, sec)
+        func()
+
+    t = threading.Timer(sec, func_wrapper)
+    t.start()
+    print("timer called")
+    return t
 
 _resource_dir = os.path.dirname(os.path.realpath(__file__)) + '/resources/'
 
@@ -43,20 +55,27 @@ class CausalityAgent:
         self.socket_s.emit('disconnect')
         self.socket_s.disconnect()
 
+
     def connect_sbgnviz(self):
         # Initialize sockets
         self.socket_s = SocketIO('localhost', self.sbgnviz_port)
+
+        self.socket_s.emit('agentCurrentRoomRequest', self.on_subscribe)
+
+        # self.conn_req = set_interval(self.send_connection_request, 5)
+
+    def send_connection_request(self):
         self.socket_s.emit('agentCurrentRoomRequest', self.on_subscribe)
 
     def on_subscribe(self, room):
         event = 'subscribeAgent'
 
         if room is None:
-            raise UncreatedDocumentException
+            threading.Timer(0.125, self.connect_sbgnviz).start()
+            # return
         else:
-            self.room_id = room
 
-            print('Reconnecting ' + room)
+            self.room_id = room
 
             user_info = {'userName': self.user_name,
                          'room': self.room_id,
@@ -73,6 +92,7 @@ class CausalityAgent:
             self.socket_s.emit('agentNewFileRequest', {'room': self.room_id})
             self.socket_s.emit('agentConnectToTripsRequest', user_info)
 
+            print('Connected ' + room)
 
 
     def on_user_list(self, user_list):
