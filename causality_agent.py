@@ -1,12 +1,13 @@
 import logging
+import os
 import sys
 import uuid
 from socketIO_client import SocketIO
 import database_handler
 
+_resource_dir = os.path.dirname(os.path.realpath(__file__)) + '/resources/'
 
-class CausalityAgent:
-
+class CausalityAgent(object):
     def __init__(self, sbgnviz_port = 3000):
         self.sbgnviz_port = sbgnviz_port
         self.user_id = '%s' % uuid.uuid4()
@@ -14,8 +15,9 @@ class CausalityAgent:
         self.color_code = '#ff46a7'
         self.room_id = ''
         self.current_users = []
+
         if len(sys.argv) == 1:
-            path = './'
+            path = _resource_dir
         else:
             path = sys.argv[1]
 
