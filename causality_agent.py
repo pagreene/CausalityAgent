@@ -3,6 +3,9 @@ import sys
 import uuid
 from socketIO_client import SocketIO
 import database_handler
+import os
+
+_resource_dir = os.path.dirname(os.path.realpath(__file__)) + '/resources/'
 
 class UncreatedDocumentException(Exception):
     def __init__(self, *args, **kwargs):
@@ -19,7 +22,7 @@ class CausalityAgent:
         self.room_id = ''
         self.current_users = []
         if len(sys.argv) == 1:
-            path = './'
+            path = _resource_dir
         else:
             path = sys.argv[1]
 
