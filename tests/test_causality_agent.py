@@ -8,7 +8,8 @@ def test_find_causality_targets_akt():
         assert res == []
     source = {'id': 'AKT1',
               'rel': 'is-phosphorylated-by'}
-    ca.find_causality_targets(source, check)
+    res = ca.find_causality_targets(source)
+    check(res)
 
 
 def test_find_causality_targets_braf():
@@ -22,7 +23,8 @@ def test_find_causality_targets_braf():
     source = {'id': 'BRAF',
               'pSite': 'S365S',
               'rel': 'is-phosphorylated-by'}
-    ca.find_causality_targets(source, check)
+    res = ca.find_causality_targets(source)
+    check(res)
 
 
 def test_find_causality_targets_mapk1():
@@ -30,7 +32,8 @@ def test_find_causality_targets_mapk1():
         print(res)
     source = {'id': 'MAPK1',
               'rel': 'phosphorylates'}
-    ca.find_causality_targets(source, check)
+    res = ca.find_causality_targets(source)
+    check(res)
 
 
 def test_find_next_correlation_akt():
