@@ -400,7 +400,7 @@ class DatabaseHandler:
 #test
 def print_result(res):
     print(res)
-# db = DatabaseHandler('./')
+# db = DatabaseHandler('./resources')
 
 # db.find_causality_targets('AKT1', print_result)
 #
