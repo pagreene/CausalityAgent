@@ -1,7 +1,6 @@
 import os
 import sqlite3
 import logging
-import os
 
 class DatabaseHandler:
     def __init__(self, path):

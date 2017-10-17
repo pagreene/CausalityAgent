@@ -9,7 +9,7 @@ import threading
 
 _resource_dir = os.path.dirname(os.path.realpath(__file__)) + '/resources/'
 
-class CausalityAgent:
+class CausalityAgent(object):
 
     def __init__(self, sbgnviz_port = 3000):
         self.sbgnviz_port = sbgnviz_port
@@ -80,6 +80,7 @@ class CausalityAgent:
         self.current_users = user_list
 
 
-agent = CausalityAgent()
-agent.start()
+if __name__ == '__main__':
+    agent = CausalityAgent()
+    agent.start()
 
