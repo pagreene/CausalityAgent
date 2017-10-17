@@ -17,11 +17,19 @@ def test_find_causality_targets_braf():
         print(res1)
         assert res1.get('rel') == 'is-phosphorylated-by'
         assert res1.get('id2') == 'MAPK1'
-        assert res1.get('res2') == 'T'
-        assert res1.get('pos2') == '185'
+        assert res1.get('res2') == ['T']
+        assert res1.get('pos2') == ['185']
     source = {'id': 'BRAF',
               'pSite': 'S365S',
               'rel': 'is-phosphorylated-by'}
+    ca.find_causality_targets(source, check)
+
+
+def test_find_causality_targets_mapk1():
+    def check(res):
+        print(res)
+    source = {'id': 'MAPK1',
+              'rel': 'phosphorylates'}
     ca.find_causality_targets(source, check)
 
 

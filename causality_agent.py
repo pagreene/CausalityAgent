@@ -1,3 +1,4 @@
+import re
 import os
 import sqlite3
 import logging
@@ -223,18 +224,15 @@ class CausalityAgent:
     # Positions need to be trimmed to correct PC formatting. E.g. s100S for pSite
     @staticmethod
     def row_to_causality(row):
-        pos1 = row[1]
-        l1 = len(row[1])
-        pos1 = row[1][1:l1-1]
-
-        pos2 = row[3]
-        l2 = len(row[3])
-        pos2 = row[3][1:l2-1]
-
-
-        causality = {'id1': row[0], 'res1': row[1][:1], 'pos1': pos1,
-                'id2': row[2], 'res2': row[3][:1], 'pos2': pos2,
-                'rel': row[4]}
+        sites1 = re.findall('([TYS][0-9]+)[TYS]', row[1])
+        sites2 = re.findall('([TYS][0-9]+)[TYS]', row[3])
+        res1 = [site[0] for site in sites1]
+        res2 = [site[0] for site in sites2]
+        pos1 = [site[1:] for site in sites1]
+        pos2 = [site[1:] for site in sites2]
+        causality = {'id1': row[0], 'res1': res1, 'pos1': pos1,
+                     'id2': row[2], 'res2': res2, 'pos2': pos2,
+                     'rel': row[4]}
         return causality
 
     # Convert the row from sql table into correlation object
