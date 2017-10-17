@@ -220,20 +220,25 @@ class DatabaseHandler:
 
 
     # Convert the row from sql table into causality object
+    # Positions need to be trimmed to correct PC formatting. E.g. s100S for pSite
     @staticmethod
     def row_to_causality(row):
-        causality = {'id1': row[0], 'res1': row[1][:1], 'pos1': row[1][1:],
-                'id2': row[2], 'res2': row[3][:1], 'pos2': row[3][1:],
+        causality = {'id1': row[0], 'res1': row[1][:1], 'pos1': row[1][1:(len(row[1])-2)],
+                'id2': row[2], 'res2': row[3][:1], 'pos2': row[3][1:(len(row[3])-2)],
                 'rel': row[4]}
         return causality
 
     # Convert the row from sql table into correlation object
+    # Positions need to be trimmed to correct PC formatting. E.g. s100S for pSite
     @staticmethod
     def row_to_correlation(row):
-        corr = {'id1': row[0], 'pSite1': row[1], 'id2': row[2], 'pSite2': row[3], 'correlation': row[4],
+        corr = {'id1': row[0], 'pSite1': row[1][1:(len(row[1])-2)], 'id2': row[2], 'pSite2': row[3][:(len(row[3])-2)], 'correlation': row[4],
                 'pVal': row[5],
                 'explainable': "\"unassigned\""}
         return corr
+
+
+
 
     # Find the causal relationship between gene1 and gene2
     def find_causality(self, param, callback):
@@ -402,13 +407,13 @@ def print_result(res):
     print(res)
 # db = DatabaseHandler('./resources')
 
-# db.find_causality_targets('AKT1', print_result)
+# db.find_causality_targets({'id':'AKT1', 'rel': 'phosphorylates'}, print_result)
 #
 # db.populate_mutsig_table()
 # db.populate_sif_relations_table()
 
 # db.populate_explained_table()
-# db.find_next_unexplained_correlation('AKT1', print_result)
+# print(db.find_next_unexplained_correlation('AKT1'))
 # db.find_next_unexplained_correlation('AKT1', print_result)
 # db.find_next_unexplained_correlation('AKT1', print_result)
 # # db.find_causality_targets({'source':{'id' :'BRAF', 'pSite' :'S365S', 'rel': 'is-phosphorylated-by'}},print_result)
