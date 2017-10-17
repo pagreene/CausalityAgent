@@ -259,7 +259,7 @@ class CausalityAgent:
 
 
     # Find the causal relationship between gene1 and gene2
-    def find_causality(self, param, callback):
+    def find_causality(self, param):
         with self.cadb:
             cur = self.cadb.cursor()
             source = param.get('source').get('id')
@@ -270,13 +270,13 @@ class CausalityAgent:
             if len(rows) > 0:
                 row = rows[0]
                 causality = self.row_to_causality(row)
-                callback(causality)
+                return causality
 
             else:
-                callback('')
+                return ''
 
     # Find the causal relationship from param.source to target
-    def find_causality_targets(self, param, callback):
+    def find_causality_targets(self, param):
         with self.cadb:
             cur = self.cadb.cursor()
             print(param)
@@ -292,10 +292,10 @@ class CausalityAgent:
                 causality = self.row_to_causality(row)
                 targets.append(causality)
 
-            callback(targets)
+            return targets
 
     # This returns the next interesting relationship be it explained or unexplained
-    def find_next_correlation(self, gene, callback):
+    def find_next_correlation(self, gene):
 
         with self.cadb:
             cur = self.cadb.cursor()
@@ -323,7 +323,7 @@ class CausalityAgent:
                 corr['pSite1'] = corr['pSite2']
                 corr['pSite2'] = tmp
 
-            callback(corr)
+            return corr
 
     # We are sure that there is a correlation between these
     def get_correlation_between(self, gene1, p_site1, gene2, p_site2):
@@ -372,13 +372,12 @@ class CausalityAgent:
                 return "not significant"
 
     # Find common upstreams between gene1 and gene2
-    def find_common_upstreams(self, genes, callback):
+    def find_common_upstreams(self, genes):
         with self.cadb:
             cur = self.cadb.cursor()
 
             if len(genes) < 2:
-                callback('')
-                return
+                return ''
 
             gene1 = genes[0]
             gene2 = genes[1]
@@ -408,7 +407,7 @@ class CausalityAgent:
             for genes in upstreams:
                 upstream_list.append({'name': genes[0]})
 
-            callback(upstream_list)
+            return upstream_list
 
     #debug method
     def find_all_correlations(self, gene):

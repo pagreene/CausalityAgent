@@ -64,10 +64,10 @@ class CausalitySbgnvizInterface(object):
                          'colorCode': self.color_code}
 
             # self.socket_s.on('message', self.on_sbgnviz_message)
-            self.socket_s.on('findCausality', self.CA.find_causality)
-            self.socket_s.on('findCausalityTargets', self.CA.find_causality_targets)
-            self.socket_s.on('findCorrelation', self.CA.find_next_correlation)
-            self.socket_s.on('findCommonUpstreams', self.CA.find_common_upstreams)
+            self.socket_s.on('findCausality', self.on_find_causality)
+            self.socket_s.on('findCausalityTargets',self.on_find_causality_targets)
+            self.socket_s.on('findCorrelation', self.on_find_next_correlation)
+            self.socket_s.on('findCommonUpstreams', self.on_find_common_upstreams)
             self.socket_s.on('reconnect', self.connect_sbgnviz)
             self.socket_s.emit(event, user_info)
             self.socket_s.emit('agentNewFileRequest', {'room': self.room_id})
@@ -75,9 +75,20 @@ class CausalitySbgnvizInterface(object):
 
             print('Connected ' + room)
 
-
     def on_user_list(self, user_list):
         self.current_users = user_list
+
+    def on_find_causality_targets(self, callback):
+        callback(self.CA.find_causality_targets)
+
+    def on_find_causality(self, callback):
+        callback(self.CA.find_causality)
+
+    def on_find_next_correlation(self, callback):
+        callback(self.CA.find_next_correlation)
+
+    def on_find_common_upstreams(self, callback):
+        callback(self.CA.find_common_upstreams)
 
 
 if __name__ == '__main__':
