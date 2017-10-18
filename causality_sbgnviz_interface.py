@@ -78,17 +78,21 @@ class CausalitySbgnvizInterface(object):
     def on_user_list(self, user_list):
         self.current_users = user_list
 
-    def on_find_causality_targets(self, callback):
-        callback(self.CA.find_causality_targets)
+    def on_find_causality_targets(self, params, callback):
+        res = self.CA.find_causality_targets(params)
+        callback(res)
 
-    def on_find_causality(self, callback):
-        callback(self.CA.find_causality)
+    def on_find_causality(self, params, callback):
+        res = self.CA.find_causality
+        callback(res)
 
-    def on_find_next_correlation(self, callback):
-        callback(self.CA.find_next_correlation)
+    def on_find_next_correlation(self, params, callback):
+        res = self.CA.find_next_correlation
+        callback(res)
 
-    def on_find_common_upstreams(self, callback):
-        callback(self.CA.find_common_upstreams)
+    def on_find_common_upstreams(self, params, callback):
+        res = self.CA.find_common_upstreams
+        callback(res)
 
 
 if __name__ == '__main__':
