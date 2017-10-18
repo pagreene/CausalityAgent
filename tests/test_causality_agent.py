@@ -1,5 +1,9 @@
+from kqml import KQMLList
 from causality_sbgnviz_interface import _resource_dir
 import causality_agent
+from causality_module import CausalityModule
+from tests.integration import _IntegrationTest
+from tests.util import ekb_kstring_from_text, get_request
 
 ca = causality_agent.CausalityAgent(_resource_dir)
 
@@ -46,6 +50,30 @@ def test_find_next_correlation_akt():
     print(res)
 
 
+class TestCausality(_IntegrationTest):
+    def __init__(self, *args):
+        super(TestCausality, self).__init__(CausalityModule)
+
+    def create_message(self):
+        source = ekb_kstring_from_text('BRAF')
+        target = ekb_kstring_from_text('MAP2K1')
+        content = KQMLList('FIND-CAUSAL-PATH')
+        content.set('source', source)
+        content.set('target', target)
+        msg = get_request(content)
+        return content, msg
+
+    def check_response_to_message(self, output):
+        print(output)
+
+'''
+cm = CausalityModule()
+mapk1 = Agent('MAPK1', db_refs={'HGNC': '3236', 'TEXT': 'EGFR'})
+term1 = ekb_from_agent(mapk1)
+mapk2 = Agent('JUND', db_refs={'HGNC': '3236', 'TEXT': 'EGFR'})
+term2 = ekb_from_agent(mapk1)
+cm.respond_find_causal_path({'SOURCE': term1, 'TARGET': term2})
+'''
 # TODO: Implement tests for the cases below
 # ca.find_next_correlation('AKT1',print_result)
 # ca.find_next_correlation('AKT1',print_result)
