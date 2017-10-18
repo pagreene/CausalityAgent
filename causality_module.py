@@ -87,7 +87,6 @@ class CausalityModule(Bioagent):
 
         target = {'id': target_name, 'pSite': ' ',
                   'rel': rel_map[rel]}
-
         result = self.CA.find_causality_targets(target)
 
 
@@ -202,6 +201,60 @@ def make_failure(reason=None):
      if reason:
          msg.set('reason', reason)
      return msg
+
+def _get_term_name(term_str):
+    tp = TripsProcessor(term_str)
+    terms = tp.tree.findall('TERM')
+    if not terms:
+        return None
+    term_id = terms[0].attrib['id']
+    agent = tp._get_agent_by_id(term_id, None)
+    if agent is None:
+        return None
+    return agent.name
+
+def make_indra_json(causality):
+    """Convert causality response to indra format
+        Causality format is (id1, res1, pos1, id2,res2, pos2, rel)"""
+    # TODO: Do these special cases still need to be handled?
+    '''
+    if causality.pos1 == '':
+        causality.pos1 = None
+    if causality.pos2 == '':
+        causality.pos2 = None
+    if causality.res1 == '':
+        causality.res1 = None
+    if causality.res2 == '':
+        causality.res2 = None
+    '''
+
+    causality['rel'] = causality['rel'].upper()
+
+    indra_relation_map = {
+        "PHOSPHORYLATES": "Phosphorylation",
+        "IS-PHOSPHORYLATED-BY": "Phosphorylation",
+        "IS-DEPHOSPHORYLATED-BY": "Dephosphorylation",
+        "UPREGULATES-EXPRESSION": "IncreaseAmount",
+        "EXPRESSION-IS-UPREGULATED-BY": "IncreaseAmount",
+        "DOWNREGULATES-EXPRESSION": "DecreaseAmount",
+        "EXPRESSION-IS-DOWNREGULATED-BY": "DecreaseAmount"
+    }
+
+    rel_type = indra_relation_map[causality['rel']]
+
+    s, t = ('2', '1') if 'IS' in causality['rel'] else ('1', '2')
+    subj, obj = ('enz', 'sub') if 'PHOSPHO' in causality['rel'] else \
+                ('subj', 'obj')
+
+    if "PHOSPHO" in causality['rel']:  # phosphorylation
+        indra_json = {'type': rel_type,
+                      subj: {'name': causality['id%s' % s],
+                             'mods': causality['mods%s' % s]},
+                      obj: {'name': causality['id%s' % t]},
+                      'residue': causality['mods%s' % t][0]['residue'],
+                      'position': causality['mods%s' % t][0]['position']}
+    return indra_json
+
 
 if __name__ == "__main__":
     CausalityModule(argv=sys.argv[1:])
