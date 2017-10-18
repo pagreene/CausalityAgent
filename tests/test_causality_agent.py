@@ -1,4 +1,6 @@
+import json
 from kqml import KQMLList
+from indra.statements import stmts_from_json
 from causality_sbgnviz_interface import _resource_dir
 import causality_agent
 from causality_module import CausalityModule
@@ -64,7 +66,15 @@ class TestCausality(_IntegrationTest):
         return msg, content
 
     def check_response_to_message(self, output):
-        print(output)
+        assert output.head() == 'SUCCESS'
+        paths = output.gets('paths')
+        jd = json.loads(paths)
+        stmts = stmts_from_json(jd)
+        assert len(stmts) == 1
+        assert stmts[0].enz.name == 'MAPK1'
+        assert stmts[0].sub.name == 'JUND'
+        assert stmts[0].residue == 'S'
+        assert stmts[0].position == '100'
 
 '''
 cm = CausalityModule()

@@ -56,10 +56,10 @@ class CausalityModule(Bioagent):
             reply = self.make_failure('NO_PATH_FOUND')
             return reply
 
-        indra_json = [make_indra_json(result)]
+        indra_json = json.dumps([make_indra_json(result)])
 
         reply = KQMLList('SUCCESS')
-        reply.set('paths', indra_json)
+        reply.sets('paths', indra_json)
 
         return reply
 
