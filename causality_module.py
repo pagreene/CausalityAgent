@@ -6,8 +6,6 @@ from bioagents import Bioagent
 from causality_agent import CausalityAgent
 from indra.sources.trips.processor import TripsProcessor
 from kqml import KQMLModule, KQMLPerformative, KQMLList, KQMLString, KQMLToken
-from bioagents.mra import MRA, MRA_Module
-from bioagents.mra.mra_module import ekb_from_agent, get_target
 
 logging.basicConfig(format='%(levelname)s: %(name)s - %(message)s',
                     level=logging.INFO)
@@ -84,12 +82,9 @@ class CausalityModule(Bioagent):
             "modulate": "modulates",
         }
 
-
-        target = {'id': target_name, 'pSite': ' ',
-                  'rel': rel_map[rel]}
+        target = {'id': target_name, 'pSite': ' ', 'rel': rel_map[rel]}
 
         result = self.CA.find_causality_targets(target)
-
 
         if not result:
             reply = self.make_failure('MISSING_MECHANISM')
@@ -125,12 +120,9 @@ class CausalityModule(Bioagent):
             "modulate": "modulates",
         }
 
-
-        source = {'id': source_name, 'pSite': ' ',
-                  'rel': rel_map[rel]}
+        source = {'id': source_name, 'pSite': ' ', 'rel': rel_map[rel]}
 
         result = self.CA.find_causality_targets(source)
-
 
         if not result:
             reply = self.make_failure('MISSING_MECHANISM')
@@ -143,6 +135,7 @@ class CausalityModule(Bioagent):
 
         return reply
 
+
 def _get_term_name(term_str):
     tp = TripsProcessor(term_str)
     terms = tp.tree.findall('TERM')
@@ -153,6 +146,7 @@ def _get_term_name(term_str):
     if agent is None:
         return None
     return agent.name
+
 
 def make_indra_json(causality):
     """Convert causality response to indra format

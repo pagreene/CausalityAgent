@@ -1,6 +1,6 @@
 import json
 from kqml import KQMLList
-from indra.statements import stmts_from_json
+from indra.statements import *
 from causality_sbgnviz_interface import _resource_dir
 import causality_agent
 from causality_module import CausalityModule
@@ -76,7 +76,6 @@ class TestCausalPath(_IntegrationTest):
         assert stmts[0].sub.name == 'JUND'
         assert stmts[0].residue == 'S'
         assert stmts[0].position == '100'
-
 
 class TestCausalityTarget(_IntegrationTest):
     def __init__(self, *args):
