@@ -103,34 +103,17 @@ def make_indra_json(causality):
 
     rel_type = indra_relation_map[causality['rel']]
 
-    if "PHOSPHO" in causality['rel']:  # phosphorylation
-        if "IS" in causality['rel']:  # passive
-            indra_json = {'type': rel_type,
-                          'enz': {'name': causality['id2'],
-                                  'mods': causality['mods2']},
-                          'sub': {'name': causality['id1']},
-                          'residue': causality['mods1'][0]['residue'],
-                          'position': causality['mods1'][0]['position']}
-        else:
-            indra_json = {'type': rel_type,
-                          'enz': {'name': causality['id1'],
-                                  'mods': causality['mods1']},
-                          'sub': {'name': causality['id2']},
-                          'residue': causality['mods2'][0]['residue'],
-                          'position': causality['mods2'][0]['position']}
-    else:  # regulation
-        if "IS" in causality.rel:  # passive
-            indra_json = {'type': rel_type, 'subj': {'name': causality.id2,
-                                                   'mods': [{'mod_type': 'phosphorylation', 'is_modified': True,
-                                                             'residue': causality.res2, 'position': causality.pos2}]},
-                          'obj': {'name': causality.id1}, 'residue': causality.res1, 'position': causality.pos1}
-        else:
-            indra_json = {'type': rel_type, 'subj': {'name': causality.id1,
-                                                   'mods': [{'mod_type': 'phosphorylation', 'is_modified': True,
-                                                             'residue': causality.res1,
-                                                             'position': causality.pos1}]},
-                          'obj': {'name': causality.id2}, 'residue': causality.res2, 'position': causality.pos2}
+    s, t = ('2', '1') if 'IS' in causality['rel'] else ('1', '2')
+    subj, obj = ('enz', 'sub') if 'PHOSPHO' in causality['rel'] else \
+                ('subj', 'obj')
 
+    if "PHOSPHO" in causality['rel']:  # phosphorylation
+        indra_json = {'type': rel_type,
+                      subj: {'name': causality['id%s' % s],
+                             'mods': causality['mods%s' % s]},
+                      obj: {'name': causality['id%s' % t]},
+                      'residue': causality['mods%s' % t][0]['residue'],
+                      'position': causality['mods%s' % t][0]['position']}
     return indra_json
 
 if __name__ == "__main__":

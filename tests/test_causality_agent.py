@@ -24,8 +24,9 @@ def test_find_causality_targets_braf():
         print(res1)
         assert res1.get('rel') == 'is-phosphorylated-by'
         assert res1.get('id2') == 'MAPK1'
-        assert res1.get('res2') == ['T']
-        assert res1.get('pos2') == ['185']
+        assert res1.get('mods2') == [{'residue': 'T', 'position': '185',
+                                      'mod_type': 'phosphorylation',
+                                      'is_modified': True}]
     source = {'id': 'BRAF',
               'pSite': 'S365S',
               'rel': 'is-phosphorylated-by'}
@@ -76,14 +77,7 @@ class TestCausality(_IntegrationTest):
         assert stmts[0].residue == 'S'
         assert stmts[0].position == '100'
 
-'''
-cm = CausalityModule()
-mapk1 = Agent('MAPK1', db_refs={'HGNC': '3236', 'TEXT': 'EGFR'})
-term1 = ekb_from_agent(mapk1)
-mapk2 = Agent('JUND', db_refs={'HGNC': '3236', 'TEXT': 'EGFR'})
-term2 = ekb_from_agent(mapk1)
-cm.respond_find_causal_path({'SOURCE': term1, 'TARGET': term2})
-'''
+
 # TODO: Implement tests for the cases below
 # ca.find_next_correlation('AKT1',print_result)
 # ca.find_next_correlation('AKT1',print_result)
