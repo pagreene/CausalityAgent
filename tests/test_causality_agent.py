@@ -86,7 +86,7 @@ class TestCausalityTarget(_IntegrationTest):
         target = ekb_kstring_from_text('MAPK1')
         content = KQMLList('FIND-CAUSALITY-TARGET')
         content.set('target', target)
-        content.sets('type', 'phosphorylates')
+        content.sets('type', 'phosphorylation')
         msg = get_request(content)
         return msg, content
 
@@ -99,6 +99,30 @@ class TestCausalityTarget(_IntegrationTest):
         assert stmts[0].sub.name == 'EIF4EBP1'
         assert stmts[0].residue == 'S'
         assert stmts[0].position == '65'
+
+
+class TestCausalitySource(_IntegrationTest):
+    def __init__(self, *args):
+        super(TestCausalitySource, self).__init__(CausalityModule)
+
+    def create_message(self):
+        source = ekb_kstring_from_text('BRAF')
+        content = KQMLList('FIND-CAUSALITY-SOURCE')
+        content.set('source', source)
+        content.sets('type', 'phosphorylation')
+        msg = get_request(content)
+        return msg, content
+
+    def check_response_to_message(self, output):
+        assert output.head() == 'SUCCESS', output
+        paths = output.gets('paths')
+        jd = json.loads(paths)
+        stmts = stmts_from_json(jd)
+        assert len(stmts) == 2
+        assert stmts[0].sub.name == 'BRAF'
+        assert stmts[0].enz.name == 'MAPK1'
+        assert stmts[0].residue == 'S'
+        assert stmts[0].position == '151'
 
 
 # TODO: Implement tests for the cases below

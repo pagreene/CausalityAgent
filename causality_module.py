@@ -63,7 +63,6 @@ class CausalityModule(Bioagent):
 
         return reply
 
-
     def respond_find_causality_target(self, content):
         """Response content to find-qca-path request"""
         target_arg = content.gets('TARGET')
@@ -82,6 +81,38 @@ class CausalityModule(Bioagent):
                   'rel': 'phosphorylates'}
 
         result = self.CA.find_causality_targets(target)
+        print(result)
+
+
+        if not result:
+            reply = self.make_failure('MISSING_MECHANISM')
+            return reply
+
+        indra_json = json.dumps([make_indra_json(r) for r in result])
+
+        reply = KQMLList('SUCCESS')
+        reply.sets('paths', indra_json)
+
+        return reply
+
+    def respond_find_causality_source(self, content):
+        """Response content to find-qca-path request"""
+        source_arg = content.gets('SOURCE')
+
+        if not source_arg:
+            raise ValueError("Source is empty")
+
+        source_name = _get_term_name(source_arg)
+        if not source_name:
+            reply = make_failure('MISSING_MECHANISM')
+            return reply
+
+        # TODO: here the 'rel' should probably be mapped from
+        # content.gets('type'), here I hard coded phosphorylation
+        source = {'id': source_name, 'pSite': ' ',
+                  'rel': 'is-phosphorylated-by'}
+
+        result = self.CA.find_causality_targets(source)
         print(result)
 
 
