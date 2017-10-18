@@ -40,7 +40,6 @@ class CausalityModule(Bioagent):
 
         target_name = _get_term_name(target_arg)
         source_name = _get_term_name(source_arg)
-        print(target_name, source_name)
         if not target_name or not source_name:
             reply = make_failure('NO_PATH_FOUND')
             return reply
@@ -49,7 +48,6 @@ class CausalityModule(Bioagent):
         source = {'id': source_name, 'pSite': ''}
 
         result = self.CA.find_causality({'source': source, 'target': target})
-        print(result)
 
 
         if not result:
@@ -81,7 +79,6 @@ class CausalityModule(Bioagent):
                   'rel': 'phosphorylates'}
 
         result = self.CA.find_causality_targets(target)
-        print(result)
 
 
         if not result:
@@ -113,7 +110,6 @@ class CausalityModule(Bioagent):
                   'rel': 'is-phosphorylated-by'}
 
         result = self.CA.find_causality_targets(source)
-        print(result)
 
 
         if not result:
