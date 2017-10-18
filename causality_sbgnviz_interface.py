@@ -83,15 +83,15 @@ class CausalitySbgnvizInterface(object):
         callback(res)
 
     def on_find_causality(self, params, callback):
-        res = self.CA.find_causality
+        res = self.CA.find_causality(params)
         callback(res)
 
     def on_find_next_correlation(self, params, callback):
-        res = self.CA.find_next_correlation
+        res = self.CA.find_next_correlation(params)
         callback(res)
 
     def on_find_common_upstreams(self, params, callback):
-        res = self.CA.find_common_upstreams
+        res = self.CA.find_common_upstreams(params)
         callback(res)
 
 
