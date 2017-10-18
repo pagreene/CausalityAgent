@@ -6,6 +6,8 @@ from bioagents import Bioagent
 from causality_agent import CausalityAgent
 from indra.sources.trips.processor import TripsProcessor
 from kqml import KQMLModule, KQMLPerformative, KQMLList, KQMLString, KQMLToken
+from bioagents.mra import MRA, MRA_Module
+from bioagents.mra.mra_module import ekb_from_agent, get_target
 
 logging.basicConfig(format='%(levelname)s: %(name)s - %(message)s',
                     level=logging.INFO)
@@ -82,6 +84,7 @@ class CausalityModule(Bioagent):
             "modulate": "modulates",
         }
 
+
         target = {'id': target_name, 'pSite': ' ',
                   'rel': rel_map[rel]}
 
@@ -115,10 +118,10 @@ class CausalityModule(Bioagent):
         rel_map = {
             "phosphorylation": "is-phosphorylated-by",
             "dephosphorylation": "is-dephosphorylated-by",
-            "activate": "expression-is-upregulated-by",
-            "increase": "expression-is-upregulated-by",
-            "inhibit": "expression-is-downregulated-by",
-            "decrease": "expression-is-downregulated-by",
+            "activate": "expression-is-up",
+            "increase": "upregulates-expression",
+            "inhibit": "downregulates-expression",
+            "decrease": "downregulates-expression",
             "modulate": "modulates",
         }
 
@@ -155,7 +158,6 @@ def make_indra_json(causality):
     """Convert causality response to indra format
         Causality format is (id1, res1, pos1, id2,res2, pos2, rel)"""
     # TODO: Do these special cases still need to be handled?
-
     '''
     if causality.pos1 == '':
         causality.pos1 = None
