@@ -55,13 +55,13 @@ class TestCausality(_IntegrationTest):
         super(TestCausality, self).__init__(CausalityModule)
 
     def create_message(self):
-        source = ekb_kstring_from_text('BRAF')
-        target = ekb_kstring_from_text('MAP2K1')
+        source = ekb_kstring_from_text('MAPK1')
+        target = ekb_kstring_from_text('JUND')
         content = KQMLList('FIND-CAUSAL-PATH')
         content.set('source', source)
         content.set('target', target)
         msg = get_request(content)
-        return content, msg
+        return msg, content
 
     def check_response_to_message(self, output):
         print(output)

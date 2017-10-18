@@ -5,7 +5,6 @@ import logging
 from bioagents import Bioagent
 from causality_agent import CausalityAgent
 from indra.sources.trips.processor import TripsProcessor
-
 from kqml import KQMLModule, KQMLPerformative, KQMLList, KQMLString, KQMLToken
 from bioagents.mra import MRA, MRA_Module
 from bioagents.mra.mra_module import ekb_from_agent, get_target
@@ -31,18 +30,26 @@ class CausalityModule(Bioagent):
 
     def respond_find_causal_path(self, content):
         """Response content to find-qca-path request"""
-        source_arg = content.get('SOURCE')
-        target_arg = content.get('TARGET')
+        source_arg = content.gets('SOURCE')
+        target_arg = content.gets('TARGET')
 
         if not source_arg:
             raise ValueError("Source is empty")
         if not target_arg:
             raise ValueError("Target is empty")
 
-        target = {'id': self._get_term_name(target_arg), 'pSite': ''}
-        source = {'id': self._get_term_name(source_arg), 'pSite': ''}
+        target_name = _get_term_name(target_arg)
+        source_name = _get_term_name(source_arg)
+        print(target_name, source_name)
+        if not target_name or not source_name:
+            reply = make_failure('NO_PATH_FOUND')
+            return reply
+
+        target = {'id': target_name, 'pSite': ''}
+        source = {'id': source_name, 'pSite': ''}
 
         result = self.CA.find_causality({'source': source, 'target': target})
+        print(result)
 
 
         if not result:
@@ -57,17 +64,21 @@ class CausalityModule(Bioagent):
         return reply
 
 
-    def _get_term_name(self, term_str):
-        term_str = '<ekb>' + term_str + '</ekb>'
-        tp = TripsProcessor(term_str)
-        terms = tp.tree.findall('TERM')
-        term_id = terms[0].attrib['id']
-        agent = tp._get_agent_by_id(term_id, None)
-        return agent.name
+def _get_term_name(term_str):
+    tp = TripsProcessor(term_str)
+    terms = tp.tree.findall('TERM')
+    if not terms:
+        return None
+    term_id = terms[0].attrib['id']
+    agent = tp._get_agent_by_id(term_id, None)
+    if agent is None:
+        return None
+    return agent.name
 
 def make_indra_json(causality):
     """Convert causality response to indra format
         Causality format is (id1, res1, pos1, id2,res2, pos2, rel)"""
+    '''
     if causality.pos1 == '':
         causality.pos1 = None
     if causality.pos2 == '':
@@ -76,8 +87,9 @@ def make_indra_json(causality):
         causality.res1 = None
     if causality.res2 == '':
         causality.res2 = None
+    '''
 
-    causality.rel = causality.rel.upper()
+    causality['rel'] = causality['rel'].upper()
 
     indra_relation_map = {
         "PHOSPHORYLATES": "Phosphorylation",
@@ -89,26 +101,23 @@ def make_indra_json(causality):
         "EXPRESSION-IS-DOWNREGULATED-BY": "DecreaseAmount"
     }
 
-    rel_type = indra_relation_map[causality.rel]
+    rel_type = indra_relation_map[causality['rel']]
 
-    if "PHOSPHO" in causality.rel:  # phosphorylation
-        if "IS" in causality.rel:  # passive
-            indra_json = {'type': rel_type, 'enz':
-                          {'name': causality.id2,
-                            'mods': [{'mod_type': 'phosphorylation',
-                                      'is_modified': True,
-                                      'residue': causality.res2,
-                                      'position': causality.pos2}]},
-                          'sub': {'name': causality.id1},
-                          'residue': causality.res1,
-                          'position': causality.pos1}
+    if "PHOSPHO" in causality['rel']:  # phosphorylation
+        if "IS" in causality['rel']:  # passive
+            indra_json = {'type': rel_type,
+                          'enz': {'name': causality['id2'],
+                                  'mods': causality['mods2']},
+                          'sub': {'name': causality['id1']},
+                          'residue': causality['mods1'][0]['residue'],
+                          'position': causality['mods1'][0]['position']}
         else:
             indra_json = {'type': rel_type,
-                          'enz': {'name': causality.id1,
-                                                   'mods': [{'mod_type': 'phosphorylation', 'is_modified': True,
-                                                             'residue': causality.res1,
-                                                             'position': causality.pos1}]},
-                          'sub': {'name': causality.id2}, 'residue': causality.res2, 'position': causality.pos2}
+                          'enz': {'name': causality['id1'],
+                                  'mods': causality['mods1']},
+                          'sub': {'name': causality['id2']},
+                          'residue': causality['mods2'][0]['residue'],
+                          'position': causality['mods2'][0]['position']}
     else:  # regulation
         if "IS" in causality.rel:  # passive
             indra_json = {'type': rel_type, 'subj': {'name': causality.id2,
