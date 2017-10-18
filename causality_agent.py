@@ -230,8 +230,18 @@ class CausalityAgent:
         res2 = [site[0] for site in sites2]
         pos1 = [site[1:] for site in sites1]
         pos2 = [site[1:] for site in sites2]
-        causality = {'id1': row[0], 'res1': res1, 'pos1': pos1,
-                     'id2': row[2], 'res2': res2, 'pos2': pos2,
+        mods1 = [{'mod_type': 'phosphorylation',
+                  'residue': site[0],
+                  'position': site[1:],
+                  'is_modified': True}
+                  for site in sites1]
+        mods2 = [{'mod_type': 'phosphorylation',
+                  'residue': site[0],
+                  'position': site[1:],
+                  'is_modified': True}
+                  for site in sites2]
+        causality = {'id1': row[0], 'mods1': mods1,
+                     'id2': row[2], 'mods2': mods2,
                      'rel': row[4]}
         return causality
 
