@@ -258,7 +258,8 @@ class CausalityAgent:
         p_site2 = row[3][1:l2-1]
 
 
-        corr = {'id1': row[0], 'pSite1': p_site1, 'id2': row[2], 'pSite2': p_site2, 'correlation': row[4],
+        corr = {'id1': row[0], 'pSite1': p_site1,
+                'id2': row[2], 'pSite2': p_site2, 'correlation': row[4],
                 'pVal': row[5],
                 'explainable': "\"unassigned\""}
         return corr

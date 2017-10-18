@@ -64,6 +64,38 @@ class CausalityModule(Bioagent):
         return reply
 
 
+    def respond_find_causality_target(self, content):
+        """Response content to find-qca-path request"""
+        target_arg = content.gets('TARGET')
+
+        if not target_arg:
+            raise ValueError("Target is empty")
+
+        target_name = _get_term_name(target_arg)
+        if not target_name:
+            reply = make_failure('MISSING_MECHANISM')
+            return reply
+
+        # TODO: here the 'rel' should probably be mapped from
+        # content.gets('type'), here I hard coded phosphorylation
+        target = {'id': target_name, 'pSite': ' ',
+                  'rel': 'phosphorylates'}
+
+        result = self.CA.find_causality_targets(target)
+        print(result)
+
+
+        if not result:
+            reply = self.make_failure('MISSING_MECHANISM')
+            return reply
+
+        indra_json = json.dumps([make_indra_json(r) for r in result])
+
+        reply = KQMLList('SUCCESS')
+        reply.sets('paths', indra_json)
+
+        return reply
+
 def _get_term_name(term_str):
     tp = TripsProcessor(term_str)
     terms = tp.tree.findall('TERM')
@@ -78,6 +110,7 @@ def _get_term_name(term_str):
 def make_indra_json(causality):
     """Convert causality response to indra format
         Causality format is (id1, res1, pos1, id2,res2, pos2, rel)"""
+    # TODO: Do these special cases still need to be handled?
     '''
     if causality.pos1 == '':
         causality.pos1 = None
