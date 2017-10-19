@@ -28,7 +28,7 @@ class CausalityAgent:
         self.populate_unexplained_table()
         self.populate_explained_table()
         self.populate_sif_relations_table(path)
-        # self.populate_mutex_table(path)
+        self.populate_mutex_table(path)
 
 
     def populate_causality_table(self, path):
@@ -52,6 +52,7 @@ class CausalityAgent:
 
             for line in causality_file:
                 vals = line.split('\t')
+                vals[len(vals) - 1] = vals[len(vals) - 1].rstrip('\n')
                 id_str1 = vals[0].upper().split('-')
                 id1 = id_str1[0]
                 if len(id_str1) > 1:
@@ -103,6 +104,7 @@ class CausalityAgent:
                 if line.find('/') > -1:  # incorrectly formatted strings
                     continue
                 vals = line.split('\t')
+                vals[len(vals) - 1] = vals[len(vals) - 1].rstrip('\n')
                 id_str1 = vals[0].upper().split('-')
                 id1 = id_str1[0]
                 if len(id_str1) > 1:
@@ -118,9 +120,9 @@ class CausalityAgent:
                 else:
                     p_site2 = ' '
 
-                corr = float(vals[2].rstrip('\n'))
+                corr = float(vals[2])
 
-                p_val = float(vals[3].rstrip('\n'))
+                p_val = float(vals[3])
 
                 cur.execute("INSERT INTO Correlations VALUES(?, ?, ?, ?, ?, ?)", (id1, p_site1, id2, p_site2, corr, p_val))
 
@@ -145,8 +147,6 @@ class CausalityAgent:
                 cur.execute("INSERT INTO MutSig VALUES(?, ?)", (gene_id,  p_val))
 
         mutsig_file.close()
-
-
 
     # Find the correlations with a causal explanation
     def populate_explained_table(self):
@@ -181,49 +181,48 @@ class CausalityAgent:
             cur.execute("CREATE TABLE Sif_Relations(Id1 TEXT,  Id2 TEXT, Rel TEXT)")
             for line in pc_file:
                 vals = line.split('\t')
+                vals[len(vals) - 1] = vals[len(vals) - 1].rstrip('\n')
                 id1 = vals[0].upper()
-                id2 = (vals[2].rstrip('\n')).upper()
+                id2 = vals[2].upper()
                 rel = vals[1]
                 cur.execute("INSERT INTO Sif_Relations VALUES(?, ?, ?)", (id1, id2, rel))
 
         pc_file.close()
 
-    # def populate_mutex_table(self, path):
-    #     mutex_file = os.path.join(path, 'ranked-groups.txt')
-    #     mutex_file = open(mutsig_path, 'r')
-    #
-    #     genes = []
-    #     for line in mutsig_file:
-    #         vals = line.split('\t')
-    #         score = vals[0]
-    #         for i in range(2, len(vals)):
-    #             genes.append
-    #
-    #     with self.cadb:
-    #         cur = self.cadb.cursor()
-    #         cur.execute("DROP TABLE IF EXISTS Mutex")
-    #         try:
-    #             cur.execute("CREATE TABLE Mutex(Id1 TEXT, Id1 TEXT, Score REAL)")
-    #         except:
-    #             pass
-    #
-    #         for line in mutsig_file:
-    #             vals = line.split('\t')
-    #             score = vals[0]
-    #             for i in range(2, len(vals)):
-    #                 gene = vals[i]
-    #                 exists = cur.execute("SELECT * FROM Mutex WHERE Id1 = gene", (gene,)).fetchall()
-    #
-    #
-    #                 cur.execute("INSERT INTO MutSig VALUES(?, ?)", (gene_id,  p_val))
-    #
-    #     mutex_file.close()
+    def populate_mutex_table(self, path):
+        mutex_path = os.path.join(path, 'ranked-groups.txt')
+        mutex_file = open(mutex_path, 'r')
 
+        with self.cadb:
+            cur = self.cadb.cursor()
+            cur.execute("DROP TABLE IF EXISTS Mutex")
+            try:
+                cur.execute("CREATE TABLE Mutex(Id1 TEXT, Id2 TEXT, Id3 TEXT, Score REAL)")
+            except:
+                pass
 
-    # Convert the row from sql table into causality object
-    # Positions need to be trimmed to correct PC formatting. E.g. s100S for pSite
+            for line in mutex_file:
+                vals = line.split('\t')
+                vals[len(vals) - 1] = vals[len(vals) - 1].rstrip('\n')
+                score = vals[0]
+                gene1 = vals[2]
+                gene2 = vals[3]
+                if len(vals) > 4:
+                    gene3 = vals[4]
+                else:
+                    gene3 = None
+
+                cur.execute("INSERT INTO Mutex VALUES(?, ?, ?, ?)", (gene1, gene2, gene3, score))
+
+        mutex_file.close()
+
     @staticmethod
     def row_to_causality(row):
+        """
+        :param row: Row from sql table
+        :return:  Causality object
+        Positions need to be trimmed to correct PC formatting. E.g. s100S for pSite
+        """
         sites1 = re.findall('([TYS][0-9]+)[TYS]', row[1])
         sites2 = re.findall('([TYS][0-9]+)[TYS]', row[3])
         res1 = [site[0] for site in sites1]
@@ -249,14 +248,16 @@ class CausalityAgent:
     # Positions need to be trimmed to correct PC formatting. E.g. s100S for pSite
     @staticmethod
     def row_to_correlation(row):
-        p_site1 = row[1]
+        """
+        :param row: Row from sql table
+        :return:  Correlation object
+        Positions need to be trimmed to correct PC formatting. E.g. s100S for pSite
+        """
         l1 = len(row[1])
         p_site1 = row[1][1:l1-1]
 
-        p_site2 = row[3]
         l2 = len(row[3])
         p_site2 = row[3][1:l2-1]
-
 
         corr = {'id1': row[0], 'pSite1': p_site1,
                 'id2': row[2], 'pSite2': p_site2, 'correlation': row[4],
@@ -264,11 +265,8 @@ class CausalityAgent:
                 'explainable': "\"unassigned\""}
         return corr
 
-
-
-
-    # Find the causal relationship between gene1 and gene2
     def find_causality(self, param):
+        """Find the causal relationship between gene1 and gene2"""
         with self.cadb:
             cur = self.cadb.cursor()
             source = param.get('source').get('id')
@@ -284,8 +282,8 @@ class CausalityAgent:
             else:
                 return ''
 
-    # Find the causal relationship from param.source to target
     def find_causality_targets(self, param):
+        """Find the causal relationship from param.source to target"""
         with self.cadb:
             cur = self.cadb.cursor()
             print(param)
@@ -305,8 +303,8 @@ class CausalityAgent:
 
             return targets
 
-    # This returns the next interesting relationship be it explained or unexplained
     def find_next_correlation(self, gene):
+        """Returns the next interesting relationship, which can be explained or unexplained"""
 
         with self.cadb:
             cur = self.cadb.cursor()
@@ -336,8 +334,8 @@ class CausalityAgent:
 
             return corr
 
-    # We are sure that there is a correlation between these
     def get_correlation_between(self, gene1, p_site1, gene2, p_site2):
+        """We know that there's a correlation between these elements"""
         with self.cadb:
             cur = self.cadb.cursor()
             # Don't change the order
@@ -352,8 +350,8 @@ class CausalityAgent:
 
             return corr
 
-    # Find the next highest unexplained correlation
     def find_next_unexplained_correlation(self, gene):
+        """Find the next highest unexplained correlation"""
         with self.cadb:
             cur = self.cadb.cursor()
             rows = cur.execute("SELECT * FROM Unexplained_Correlations "
@@ -371,6 +369,7 @@ class CausalityAgent:
                 return ''
 
     def find_mut_sig(self, gene):
+        """Find mutation significance"""
         with self.cadb:
             cur = self.cadb.cursor()
             p_val = cur.execute("SELECT PVal FROM MutSig WHERE Id = ?", (gene,)).fetchone()
@@ -382,8 +381,8 @@ class CausalityAgent:
             else:
                 return "not significant"
 
-    # Find common upstreams between gene1 and gene2
     def find_common_upstreams(self, genes):
+        """Find common upstreams between gene1 and gene2"""
         with self.cadb:
             cur = self.cadb.cursor()
 
@@ -398,11 +397,8 @@ class CausalityAgent:
                                     "s1.Rel = 'controls-state-change-of' AND s2.Rel = s1.Rel)",
                                     (gene1, gene2)).fetchall()
 
-
             for i in range(2, len(genes)):
                 gene = genes[i]
-
-
                 upstream_arr = []
                 for upstream in upstreams:
                     upstream_arr.append(upstream[0])
@@ -413,47 +409,61 @@ class CausalityAgent:
                 upstreams = cur.execute(query, (gene,)).fetchall()
 
 
-            #format upstreams
+            # format upstreams
             upstream_list = []
             for genes in upstreams:
                 upstream_list.append({'name': genes[0]})
 
             return upstream_list
 
-    #debug method
-    def find_all_correlations(self, gene):
+    def find_mutex(self, gene):
+        """Find a mutually exclusive group that includes gene"""
+
         with self.cadb:
             cur = self.cadb.cursor()
-            rows = cur.execute("SELECT * FROM Correlations WHERE Id1 = ?  OR Id2 = ?",
-                               (gene, gene)).fetchall()
-            for row in rows:
-                print row[0], row[2]
+            groups = cur.execute("SELECT * FROM Mutex WHERE Id1 = ? OR Id2 = ? OR Id3 = ?",
+                                 (gene, gene, gene)).fetchall()
+
+        # format groups
+        mutex_list = []
+        for group in groups:
+            mutex = {'group': [], 'score': group[len(group) - 1]}
+            for i in range(len(group) - 1):
+                mutex['group'].append(group[i])
+            mutex_list.append(mutex)
+
+        return mutex_list
 
 
 #test
 def print_result(res):
     print(res)
-# db = CausalityAgent('./resources')
 
-# db.find_causality_targets({'id':'MAPK1', 'rel': 'phosphorylates'}, print_result)
-# db.find_causality_targets({'id':'BRAF', 'rel': 'is-phosphorylated-by'}, print_result)
+# ca = CausalityAgent('./resources')
+# ca.populate_mutex_table('./resources')
+
+# print(ca.find_mutex('PIK3CA'))
+
+
+# ca.find_causality_targets({'id':'MAPK1', 'rel': 'phosphorylates'}, print_result)
+# ca.find_causality_targets({'id':'BRAF', 'rel': 'is-phosphorylated-by'}, print_result)
 #
-# db.populate_mutsig_table()
-# db.populate_sif_relations_table()
+# ca.populate_mutsig_table()
+# ca.populate_sif_relations_table()
 
-# db.populate_explained_table()
-# print(db.find_next_unexplained_correlation('AKT1'))
-# db.find_next_unexplained_correlation('AKT1', print_result)
-# db.find_next_unexplained_correlation('AKT1', print_result)
-# # db.find_causality_targets({'source':{'id' :'BRAF', 'pSite' :'S365S', 'rel': 'is-phosphorylated-by'}},print_result)
-# db.find_next_correlation('AKT1',print_result)
-# db.find_next_correlation('AKT1',print_result)
-# db.find_next_correlation('AKT1',print_result)
-# db.find_next_correlation('AKT1',print_result)
-# db.find_next_correlation('AKT1',print_result)
-# # db.find_next_correlation('AKT1',print_result)
-# db.find_correlation_between('AKT1', 'BRAF')
-# db.find_all_correlations('AKT1')
-# print(db.find_mut_sig('TP53'))
-# db.find_common_upstreams('RAC1', 'RAC2')
-# db.find_common_upstreams(['AKT1', 'BRAF', 'MAPK1'], print_result)
+# ca.populate_explained_table()
+# print(ca.find_next_unexplained_correlation('AKT1'))
+# ca.find_next_unexplained_correlation('AKT1', print_result)
+# ca.find_next_unexplained_correlation('AKT1', print_result)
+# # ca.find_causality_targets({'source':{'id' :'BRAF', 'pSite' :'S365S', 'rel': 'is-phosphorylated-by'}},print_result)
+# ca.find_next_correlation('AKT1',print_result)
+# ca.find_next_correlation('AKT1',print_result)
+# ca.find_next_correlation('AKT1',print_result)
+# ca.find_next_correlation('AKT1',print_result)
+# ca.find_next_correlation('AKT1',print_result)
+# # ca.find_next_correlation('AKT1',print_result)
+# ca.find_correlation_between('AKT1', 'BRAF')
+# ca.find_all_correlations('AKT1')
+# print(ca.find_mut_sig('TP53'))
+# ca.find_common_upstreams('RAC1', 'RAC2')
+# ca.find_common_upstreams(['AKT1', 'BRAF', 'MAPK1'], print_result)
