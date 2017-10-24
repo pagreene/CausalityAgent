@@ -262,18 +262,28 @@ class CausalityAgent:
                 'explainable': "\"unassigned\""}
         return corr
 
-
-
-
     # Find the causal relationship between gene1 and gene2
     def find_causality(self, param):
         with self.cadb:
             cur = self.cadb.cursor()
-            source = param.get('source').get('id')
-            target = param.get('target').get('id')
+            sources = param.get('source').get('id')
+            targets = param.get('target').get('id')
 
-            rows = cur.execute("SELECT * FROM Causality WHERE Id1 = ? AND  Id2 = ?",
-                               (source, target)).fetchall()
+            if isinstance(sources, list):
+                source_str = "(" + ", ".join((("'" + str(source) + "'") for source in sources)) + ")"
+            else:
+                source_str = "('" + sources + "')"
+
+            if isinstance(targets, list):
+                target_str = "(" + ", ".join((("'" + str(target) + "'") for target in targets)) + ")"
+            else:
+                target_str = "('" + targets + "')"
+
+            query = "SELECT * FROM Causality WHERE Id1 IN " + source_str + "AND Id2 IN  " + target_str
+
+            rows = cur.execute(query).fetchall()
+
+            print(rows)
             if len(rows) > 0:
                 row = rows[0]
                 causality = self.row_to_causality(row)
@@ -431,7 +441,9 @@ class CausalityAgent:
 #test
 def print_result(res):
     print(res)
-# db = CausalityAgent('./resources')
+db = CausalityAgent('./resources')
+
+# db.find_causality({'source': {'id':'MAPK1'}, 'target': {'id': ['JUND', 'ERF']}})
 
 # db.find_causality_targets({'id':'MAPK1', 'rel': 'phosphorylates'}, print_result)
 # db.find_causality_targets({'id':'BRAF', 'rel': 'is-phosphorylated-by'}, print_result)

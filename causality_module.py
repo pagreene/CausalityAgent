@@ -29,7 +29,7 @@ class CausalityModule(Bioagent):
         super(CausalityModule, self).__init__(**kwargs)
 
     def respond_find_causal_path(self, content):
-        """Response content to find-qca-path request"""
+        """Response content to find-causal-path request"""
         source_arg = content.gets('SOURCE')
         target_arg = content.gets('TARGET')
 
@@ -49,7 +49,6 @@ class CausalityModule(Bioagent):
 
         result = self.CA.find_causality({'source': source, 'target': target})
 
-
         if not result:
             reply = self.make_failure('NO_PATH_FOUND')
             return reply
@@ -62,7 +61,7 @@ class CausalityModule(Bioagent):
         return reply
 
     def respond_find_causality_target(self, content):
-        """Response content to find-qca-path request"""
+        """Response content to find-causality-target request"""
         target_arg = content.gets('TARGET')
         rel = content.gets('TYPE')
 
