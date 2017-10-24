@@ -296,15 +296,21 @@ class CausalityAgent:
     def find_causality_targets(self, param):
         with self.cadb:
             cur = self.cadb.cursor()
-            print(param)
-            id = param.get('id')
-            p_site = param.get('pSite')
+            genes = param.get('id')
+
+            if isinstance(genes, list):
+                id_str =  ", ".join((("'" + str(gene) + "'") for gene in genes))
+            else:
+                id_str = "('" + genes + "')"
+
             rel = param.get('rel')
 
             if rel.upper() == "MODULATES":
-                rows = cur.execute("SELECT * FROM Causality WHERE Id1 = ?", (id,)).fetchall()
+                query = "SELECT * FROM Causality WHERE Id1 IN " + "(" + id_str + ")";
+                rows = cur.execute(query).fetchall()
             else:
-                rows = cur.execute("SELECT * FROM Causality WHERE Id1 = ? AND Rel = ?", (id, rel)).fetchall()
+                query = "SELECT * FROM Causality WHERE Rel = ?  AND Id1 IN " + "(" + id_str + ")";
+                rows = cur.execute(query, (rel,)).fetchall()
 
             targets = []
             for row in rows:
@@ -441,9 +447,10 @@ class CausalityAgent:
 #test
 def print_result(res):
     print(res)
-db = CausalityAgent('./resources')
+# db = CausalityAgent('./resources')
 
 # db.find_causality({'source': {'id':'MAPK1'}, 'target': {'id': ['JUND', 'ERF']}})
+# db.find_causality_targets({'id': ['MAPK1', 'BRAF'], 'rel': 'phosphorylates'})
 
 # db.find_causality_targets({'id':'MAPK1', 'rel': 'phosphorylates'}, print_result)
 # db.find_causality_targets({'id':'BRAF', 'rel': 'is-phosphorylated-by'}, print_result)
