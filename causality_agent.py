@@ -249,11 +249,9 @@ class CausalityAgent:
     # Positions need to be trimmed to correct PC formatting. E.g. s100S for pSite
     @staticmethod
     def row_to_correlation(row):
-        p_site1 = row[1]
         l1 = len(row[1])
         p_site1 = row[1][1:l1-1]
 
-        p_site2 = row[3]
         l2 = len(row[3])
         p_site2 = row[3][1:l2-1]
 
