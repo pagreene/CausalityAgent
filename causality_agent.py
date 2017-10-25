@@ -28,7 +28,7 @@ class CausalityAgent:
         self.populate_unexplained_table()
         self.populate_explained_table()
         self.populate_sif_relations_table(path)
-        # self.populate_mutex_table(path)
+        self.populate_mutex_table(path)
 
 
     def populate_causality_table(self, path):
@@ -188,37 +188,32 @@ class CausalityAgent:
 
         pc_file.close()
 
-    # def populate_mutex_table(self, path):
-    #     mutex_file = os.path.join(path, 'ranked-groups.txt')
-    #     mutex_file = open(mutsig_path, 'r')
-    #
-    #     genes = []
-    #     for line in mutsig_file:
-    #         vals = line.split('\t')
-    #         score = vals[0]
-    #         for i in range(2, len(vals)):
-    #             genes.append
-    #
-    #     with self.cadb:
-    #         cur = self.cadb.cursor()
-    #         cur.execute("DROP TABLE IF EXISTS Mutex")
-    #         try:
-    #             cur.execute("CREATE TABLE Mutex(Id1 TEXT, Id1 TEXT, Score REAL)")
-    #         except:
-    #             pass
-    #
-    #         for line in mutsig_file:
-    #             vals = line.split('\t')
-    #             score = vals[0]
-    #             for i in range(2, len(vals)):
-    #                 gene = vals[i]
-    #                 exists = cur.execute("SELECT * FROM Mutex WHERE Id1 = gene", (gene,)).fetchall()
-    #
-    #
-    #                 cur.execute("INSERT INTO MutSig VALUES(?, ?)", (gene_id,  p_val))
-    #
-    #     mutex_file.close()
+    def populate_mutex_table(self, path):
+        mutex_path = os.path.join(path, 'ranked-groups.txt')
+        mutex_file = open(mutex_path, 'r')
 
+        with self.cadb:
+            cur = self.cadb.cursor()
+            cur.execute("DROP TABLE IF EXISTS Mutex")
+            try:
+                cur.execute("CREATE TABLE Mutex(Id1 TEXT, Id2 TEXT, Id3 TEXT, Score REAL)")
+            except:
+                pass
+
+            for line in mutex_file:
+                vals = line.split('\t')
+                vals[len(vals) - 1] = vals[len(vals) - 1].rstrip('\n')
+                score = vals[0]
+                gene1 = vals[2]
+                gene2 = vals[3]
+                if len(vals) > 4:
+                    gene3 = vals[4]
+                else:
+                    gene3 = None
+
+                cur.execute("INSERT INTO Mutex VALUES(?, ?, ?, ?)", (gene1, gene2, gene3, score))
+
+        mutex_file.close()
 
     # Convert the row from sql table into causality object
     # Positions need to be trimmed to correct PC formatting. E.g. s100S for pSite
@@ -285,12 +280,10 @@ class CausalityAgent:
 
             rows = cur.execute(query).fetchall()
 
-
             if len(rows) > 0:
                 row = rows[0]
                 causality = self.row_to_causality(row)
                 return causality
-
             else:
                 return ''
 
@@ -445,6 +438,23 @@ class CausalityAgent:
             for row in rows:
                 print row[0], row[2]
 
+    def find_mutex(self, gene):
+        """Find a mutually exclusive group that includes gene"""
+
+        with self.cadb:
+            cur = self.cadb.cursor()
+            groups = cur.execute("SELECT * FROM Mutex WHERE Id1 = ? OR Id2 = ? OR Id3 = ?",
+                                 (gene, gene, gene)).fetchall()
+
+        # format groups
+        mutex_list = []
+        for group in groups:
+            mutex = {'group': [], 'score': group[len(group) - 1]}
+            for i in range(len(group) - 1):
+                mutex['group'].append(group[i])
+            mutex_list.append(mutex)
+
+        return mutex_list
 
 #test
 def print_result(res):
