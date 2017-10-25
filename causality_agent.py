@@ -242,7 +242,9 @@ class CausalityAgent:
                   for site in sites2]
         causality = {'id1': row[0], 'mods1': mods1,
                      'id2': row[2], 'mods2': mods2,
-                     'rel': row[4]}
+                     'rel': row[4],
+                     'uri_str': row[5]
+                     }
         return causality
 
     # Convert the row from sql table into correlation object
@@ -283,7 +285,7 @@ class CausalityAgent:
 
             rows = cur.execute(query).fetchall()
 
-            print(rows)
+
             if len(rows) > 0:
                 row = rows[0]
                 causality = self.row_to_causality(row)
@@ -449,7 +451,15 @@ def print_result(res):
     print(res)
 # db = CausalityAgent('./resources')
 
-# db.find_causality({'source': {'id':'MAPK1'}, 'target': {'id': ['JUND', 'ERF']}})
+# res = db.find_causality({'source': {'id':'MAPK1'}, 'target': {'id': ['JUND', 'ERF']}})
+
+# uri_str = res['uri_str']
+
+# pc_url = 'http://www.pathwaycommons.org/pc2/get?' + uri_str + 'format=SBGN'
+# html = "<a href= \"" + pc_url + "\" target= \"_blank\">" + uri_str + "</a>"
+# print(html)
+
+
 # db.find_causality_targets({'id': ['MAPK1', 'BRAF'], 'rel': 'phosphorylates'})
 
 # db.find_causality_targets({'id':'MAPK1', 'rel': 'phosphorylates'}, print_result)

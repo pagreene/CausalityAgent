@@ -28,6 +28,7 @@ class CausalityModule(Bioagent):
         # Call the constructor of KQMLModule
         super(CausalityModule, self).__init__(**kwargs)
 
+
     def respond_find_causal_path(self, content):
         """Response content to find-causal-path request"""
         source_arg = content.gets('SOURCE')
@@ -41,7 +42,7 @@ class CausalityModule(Bioagent):
         target_name = _get_term_name(target_arg)
         source_name = _get_term_name(source_arg)
         if not target_name or not source_name:
-            reply = make_failure('NO_PATH_FOUND')
+            reply = self.make_failure('NO_PATH_FOUND')
             return reply
 
         target = {'id': target_name, 'pSite': ''}
@@ -58,7 +59,19 @@ class CausalityModule(Bioagent):
         reply = KQMLList('SUCCESS')
         reply.sets('paths', indra_json)
 
+        # Send PC links to provenance tab
+        self.send_provenance(result['uri_str'])
+
         return reply
+
+    def send_provenance(self, uri_str):
+        pc_url = 'http://www.pathwaycommons.org/pc2/get?' + uri_str + 'format=SBGN'
+        html = '<a href= \'' + pc_url + '\' target= \'_blank\'> Click for Pathway Commons queries</a>'
+        msg = KQMLPerformative('tell')
+        content = KQMLList('add-provenance')
+        content.sets('html', html)
+        msg.set('content', content)
+        self.send(msg)
 
     def respond_find_causality_target(self, content):
         """Response content to find-causality-target request"""
@@ -70,7 +83,7 @@ class CausalityModule(Bioagent):
 
         target_name = _get_term_name(target_arg)
         if not target_name:
-            reply = make_failure('MISSING_MECHANISM')
+            reply = self.make_failure('MISSING_MECHANISM')
             return reply
 
         rel_map = {
@@ -93,6 +106,9 @@ class CausalityModule(Bioagent):
             reply = self.make_failure('MISSING_MECHANISM')
             return reply
 
+        # Send PC links to provenance tab
+        self.send_provenance(result['uri_str'])
+
         indra_json = json.dumps([make_indra_json(r) for r in result])
 
         reply = KQMLList('SUCCESS')
@@ -110,7 +126,7 @@ class CausalityModule(Bioagent):
 
         source_name = _get_term_name(source_arg)
         if not source_name:
-            reply = make_failure('MISSING_MECHANISM')
+            reply = self.make_failure('MISSING_MECHANISM')
             return reply
 
         rel_map = {
@@ -195,11 +211,6 @@ def make_indra_json(causality):
     return indra_json
 
 
-def make_failure(reason=None):
-     msg = KQMLList('FAILURE')
-     if reason:
-         msg.set('reason', reason)
-     return msg
 
 def _get_term_name(term_str):
     tp = TripsProcessor(term_str)
