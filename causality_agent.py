@@ -3,6 +3,8 @@ import os
 import sqlite3
 import logging
 
+logger = logging.getLogger('CausalA')
+
 class CausalityAgent:
     def __init__(self, path):
         self.corr_ind = 0
@@ -12,11 +14,17 @@ class CausalityAgent:
         if os.path.isfile(db_file):
             self.cadb = sqlite3.connect(db_file)
         else:
-            # create table if it doesn't exist
-            fp = open(db_file, 'w')
-            fp.close()
-            self.cadb = sqlite3.connect(db_file)
-            self.populate_tables(path)
+            logger.info("Trying to populate tables....")
+            try:
+                # create table if it doesn't exist
+                fp = open(db_file, 'w').close()
+                self.cadb = sqlite3.connect(db_file)
+                self.populate_tables(path)
+            except Exception as e:
+                logger.error("Failed to populate databse.")
+                logger.exception(e)
+                raise e
+            logger.info("Tables populated.")
 
     def __del__(self):
         self.cadb.close()
@@ -32,6 +40,7 @@ class CausalityAgent:
 
 
     def populate_causality_table(self, path):
+        logger.info("Populating causality table...")
         opposite_rel = {
             'phosphorylates': 'is-phosphorylated-by',
             'dephosphorylates': 'is-dephosphorylated-by',
@@ -88,6 +97,7 @@ class CausalityAgent:
         causality_file.close()
 
     def populate_correlation_table(self, path):
+        logger.info("Populating correlation table...")
         pnnl_path = os.path.join(path, 'PNNL-ovarian-correlations.txt')
         pnnl_file = open(pnnl_path, 'r')
 
@@ -127,6 +137,7 @@ class CausalityAgent:
         pnnl_file.close()
 
     def populate_mutsig_table(self, path):
+        logger.info('Populating mutsig table...')
         mutsig_path = os.path.join(path, 'scores-mutsig.txt')
         mutsig_file = open(mutsig_path, 'r')
 
@@ -150,6 +161,7 @@ class CausalityAgent:
 
     # Find the correlations with a causal explanation
     def populate_explained_table(self):
+        logger.info('Populating explained table...')
         with self.cadb:
             cur = self.cadb.cursor()
             cur.execute("DROP TABLE IF EXISTS Explained_Correlations")
@@ -161,6 +173,7 @@ class CausalityAgent:
 
     # Find the correlations without a causal explanation
     def populate_unexplained_table(self):
+        logger.info('Populating unexplained table...')
         with self.cadb:
             cur = self.cadb.cursor()
             cur.execute("DROP TABLE IF EXISTS Unexplained_Correlations")
@@ -172,6 +185,7 @@ class CausalityAgent:
 
     #All sif relations from PathwayCommons
     def populate_sif_relations_table(self, path):
+        logger.info('Populating sif relations table....')
         pc_path = os.path.join(path, 'PC.sif')
         pc_file = open(pc_path, 'r')
 
@@ -189,6 +203,7 @@ class CausalityAgent:
         pc_file.close()
 
     def populate_mutex_table(self, path):
+        logger.info('Populating mutex table....')
         mutex_path = os.path.join(path, 'ranked-groups.txt')
         mutex_file = open(mutex_path, 'r')
 
