@@ -66,10 +66,12 @@ class CausalityModule(Bioagent):
 
     def send_provenance(self, uri_str):
         pc_url = 'http://www.pathwaycommons.org/pc2/get?' + uri_str + 'format=SBGN'
-        html = '<a href= \'' + pc_url + '\' target= \'_blank\'> Click for Pathway Commons queries</a>'
+        html = '<a href= \'' + pc_url + '\' target= \'_blank\' > Click here for Pathway Commons query</a>'
         msg = KQMLPerformative('tell')
         content = KQMLList('add-provenance')
         content.sets('html', html)
+        pc_url_formatted = "http://www.pathwaycommons.org/pc2/get?" + uri_str + "format=SBGN"
+        content.sets('pc', pc_url_formatted)
         msg.set('content', content)
         self.send(msg)
 
