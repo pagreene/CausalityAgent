@@ -100,7 +100,6 @@ class TestCausalityTarget(_IntegrationTest):
         assert stmts[0].residue == 'S'
         assert stmts[0].position == '65'
 
-
 class TestCausalitySource(_IntegrationTest):
     def __init__(self, *args):
         super(TestCausalitySource, self).__init__(CausalityModule)

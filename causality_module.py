@@ -6,8 +6,7 @@ from bioagents import Bioagent
 from causality_agent import CausalityAgent
 from indra.sources.trips.processor import TripsProcessor
 from kqml import KQMLModule, KQMLPerformative, KQMLList, KQMLString, KQMLToken
-from bioagents.mra import MRA, MRA_Module
-from bioagents.mra.mra_module import ekb_from_agent, get_target
+
 
 logging.basicConfig(format='%(levelname)s: %(name)s - %(message)s',
                     level=logging.INFO)
@@ -66,7 +65,7 @@ class CausalityModule(Bioagent):
 
     def send_provenance(self, uri_str):
         pc_url = 'http://www.pathwaycommons.org/pc2/get?' + uri_str + 'format=SBGN'
-        html = '<a href= \'' + pc_url + '\' target= \'_blank\' > Click here for Pathway Commons query</a>'
+        html = '<a href= \'' + pc_url + '\' target= \'_blank\' > PC link</a>'
         msg = KQMLPerformative('tell')
         content = KQMLList('add-provenance')
         content.sets('html', html)
@@ -109,7 +108,9 @@ class CausalityModule(Bioagent):
             return reply
 
         # Send PC links to provenance tab
-        self.send_provenance(result['uri_str'])
+        # Multiple interactions are sent separately
+        for r in result:
+            self.send_provenance(r['uri_str'])
 
         indra_json = json.dumps([make_indra_json(r) for r in result])
 
@@ -147,10 +148,13 @@ class CausalityModule(Bioagent):
 
         result = self.CA.find_causality_targets(source)
 
-
         if not result:
             reply = self.make_failure('MISSING_MECHANISM')
             return reply
+
+        # Multiple interactions are sent separately
+        for r in result:
+            self.send_provenance(r['uri_str'])
 
         indra_json = json.dumps([make_indra_json(r) for r in result])
 
