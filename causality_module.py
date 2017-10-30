@@ -109,7 +109,13 @@ class CausalityModule(Bioagent):
             return reply
 
         # Send PC links to provenance tab
-        self.send_provenance(result['uri_str'])
+        # TODO: self.send_provenance only accepts a single uri_str
+        # currently so it doesn't support information on multiple interactions
+        # to be sent as provenance. For now, I take only the first element of
+        # the list here to make this work. But send_provenance should
+        # be generalized to allow evidence for multiple interactions
+        # to be sent.
+        self.send_provenance(result[0]['uri_str'])
 
         indra_json = json.dumps([make_indra_json(r) for r in result])
 
@@ -151,6 +157,14 @@ class CausalityModule(Bioagent):
         if not result:
             reply = self.make_failure('MISSING_MECHANISM')
             return reply
+
+        # TODO: self.send_provenance only accepts a single uri_str
+        # currently so it doesn't support information on multiple interactions
+        # to be sent as provenance. For now, I take only the first element of
+        # the list here to make this work. But send_provenance should
+        # be generalized to allow evidence for multiple interactions
+        # to be sent.
+        self.send_provenance(result[0]['uri_str'])
 
         indra_json = json.dumps([make_indra_json(r) for r in result])
 
