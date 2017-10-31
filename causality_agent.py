@@ -379,17 +379,21 @@ class CausalityAgent:
             else:
                 return ''
 
-    def find_mut_sig(self, gene):
+    def find_mutation_significance(self, gene):
+        """
+        :param gene: single gene name
+        :return: string, mutation significance
+        """
         with self.cadb:
             cur = self.cadb.cursor()
             p_val = cur.execute("SELECT PVal FROM MutSig WHERE Id = ?", (gene,)).fetchone()
 
             if p_val[0] < 0.01:
-                return "highly significant"
+                return 'highly significant'
             elif p_val[0] < 0.05:
-                return "significant"
+                return 'significant'
             else:
-                return "not significant"
+                return 'not significant'
 
     def find_common_upstreams(self, genes):
         """ Find common upstreams between a list of genes"""
@@ -438,7 +442,10 @@ class CausalityAgent:
                 print row[0], row[2]
 
     def find_mutex(self, gene):
-        """Find a mutually exclusive group that includes gene"""
+        """Find a mutually exclusive group that includes gene
+        ;:param single gene name
+        :return object list
+        """
 
         with self.cadb:
             cur = self.cadb.cursor()
@@ -490,6 +497,6 @@ def print_result(res):
 # # db.find_next_correlation('AKT1',print_result)
 # db.find_correlation_between('AKT1', 'BRAF')
 # db.find_all_correlations('AKT1')
-# print(db.find_mut_sig('TP53'))
+# print(db.find_mutation_significance('TP53'))
 # db.find_common_upstreams('RAC1', 'RAC2')
 # print(db.find_common_upstreams(['AKT1', 'BRAF', 'MAPK1']))

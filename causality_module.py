@@ -20,16 +20,16 @@ class CausalityModule(Bioagent):
     tasks = ['FIND-CAUSAL-PATH', 'FIND-CAUSALITY-TARGET',
              'FIND-CAUSALITY-SOURCE',
              'DATASET-CORRELATED-ENTITY', 'FIND-COMMON-UPSTREAMS',
-             'RESTART-CAUSALITY-INDICES']
+             'RESTART-CAUSALITY-INDICES', 'FIND-MUTATION-SIGNIFICANCE', 'FIND-MUTEX']
 
     def __init__(self, **kwargs):
         self.CA = CausalityAgent(_resource_dir)
         # Call the constructor of KQMLModule
         super(CausalityModule, self).__init__(**kwargs)
 
-
     def respond_find_causal_path(self, content):
         """Response content to find-causal-path request"""
+
         source_arg = content.gets('SOURCE')
         target_arg = content.gets('TARGET')
 
@@ -40,7 +40,6 @@ class CausalityModule(Bioagent):
 
         target_names = _get_term_names(target_arg)
         source_names = _get_term_names(source_arg)
-
 
         if not target_names or not source_names:
             reply = self.make_failure('NO_PATH_FOUND')
@@ -104,11 +103,8 @@ class CausalityModule(Bioagent):
             "modulate": "modulates",
         }
 
-
-        target = {'id': target_name, 'pSite': ' ',
-                  'rel': rel_map[rel]}
+        target = {'id': target_name, 'pSite': ' ', 'rel': rel_map[rel]}
         result = self.CA.find_causality_targets(target)
-
 
         if not result:
             reply = self.make_failure('MISSING_MECHANISM')
@@ -177,7 +173,6 @@ class CausalityModule(Bioagent):
         if not genes_arg:
             raise ValueError("Gene list is empty")
 
-
         gene_names = _get_term_names(genes_arg)
 
         if not gene_names:
@@ -200,7 +195,59 @@ class CausalityModule(Bioagent):
 
         return reply
 
+    def respond_find_mutation_significance(self, content):
+        """Response content to find-mutation-significance request"""
+        gene_arg = content.gets('GENE')
+
+        if not gene_arg:
+            raise ValueError("Source is empty")
+
+        gene_names = _get_term_names(gene_arg)
+        if not gene_names:
+            reply = self.make_failure('MISSING_MECHANISM')
+            return reply
+        gene_name = gene_names[0]
+
+        result = self.CA.find_mutation_significance(gene_name)
+
+        if not result:
+            reply = self.make_failure('MISSING_MECHANISM')
+            return reply
+
+        reply = KQMLList('SUCCESS')
+        reply.sets('mutsig', result)
+
+        return reply
+
+    def respond_find_mutex(self, content):
+        """Response content to find-mutation-significance request"""
+
+        gene_arg = content.gets('GENE')
+
+        if not gene_arg:
+            raise ValueError("Source is empty")
+
+        gene_names = _get_term_names(gene_arg)
+        if not gene_names:
+            reply = self.make_failure('MISSING_MECHANISM')
+            return reply
+        gene_name = gene_names[0]
+
+        result = self.CA.find_mutex(gene_name)
+
+        if not result:
+            reply = self.make_failure('MISSING_MECHANISM')
+            return reply
+
+        reply = KQMLList('SUCCESS')
+        reply.sets('mutex', result)
+
+        return reply
+
+
 def _get_term_names(term_str):
+    """Given an ekb-xml returns the names of genes in a list"""
+
     tp = TripsProcessor(term_str)
     terms = tp.tree.findall('TERM')
     if not terms:
@@ -209,7 +256,6 @@ def _get_term_names(term_str):
     agent_names = []
     for term in terms:
         term_id = term.attrib['id']
-
         agent = tp._get_agent_by_id(term_id, None)
 
         if agent is not None:
@@ -225,20 +271,10 @@ def _get_term_names(term_str):
 
     return agent_names
 
+
 def make_indra_json(causality):
     """Convert causality response to indra format
         Causality format is (id1, res1, pos1, id2,res2, pos2, rel)"""
-    # TODO: Do these special cases still need to be handled?
-    '''
-    if causality.pos1 == '':
-        causality.pos1 = None
-    if causality.pos2 == '':
-        causality.pos2 = None
-    if causality.res1 == '':
-        causality.res1 = None
-    if causality.res2 == '':
-        causality.res2 = None
-    '''
 
     causality['rel'] = causality['rel'].upper()
 
@@ -269,31 +305,10 @@ def make_indra_json(causality):
 
 
 
-def _get_term_name(term_str):
-    tp = TripsProcessor(term_str)
-    terms = tp.tree.findall('TERM')
-    if not terms:
-        return None
-    term_id = terms[0].attrib['id']
-    agent = tp._get_agent_by_id(term_id, None)
-    if agent is None:
-        return None
-    return agent.name
 
 def make_indra_json(causality):
     """Convert causality response to indra format
         Causality format is (id1, res1, pos1, id2,res2, pos2, rel)"""
-    # TODO: Do these special cases still need to be handled?
-    '''
-    if causality.pos1 == '':
-        causality.pos1 = None
-    if causality.pos2 == '':
-        causality.pos2 = None
-    if causality.res1 == '':
-        causality.res1 = None
-    if causality.res2 == '':
-        causality.res2 = None
-    '''
 
     causality['rel'] = causality['rel'].upper()
 

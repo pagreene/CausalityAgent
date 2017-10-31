@@ -123,6 +123,7 @@ class TestCausalitySource(_IntegrationTest):
         assert stmts[0].residue == 'S'
         assert stmts[0].position == '151'
 
+
 class TestCommonUpstreams(_IntegrationTest):
     def __init__(self, *args):
         super(TestCommonUpstreams, self).__init__(CausalityModule)
@@ -143,6 +144,41 @@ class TestCommonUpstreams(_IntegrationTest):
         assert len(upstreams) == 17
 
 
+class TestMutSig(_IntegrationTest):
+    def __init__(self, *args):
+        super(TestMutSig, self).__init__(CausalityModule)
+
+    def create_message(self):
+        content = KQMLList('FIND-MUTATION-SIGNIFICANCE')
+        gene = ekb_kstring_from_text('TP53')
+        content.set('gene', gene)
+
+        msg = get_request(content)
+        return msg, content
+
+    def check_response_to_message(self, output):
+        assert output.head() == 'SUCCESS', output
+        mut_sig = output.gets('mutsig')
+        assert mut_sig == "highly significant"
+
+class TestMutex(_IntegrationTest):
+    def __init__(self, *args):
+        super(TestMutex, self).__init__(CausalityModule)
+
+    def create_message(self):
+        content = KQMLList('FIND-MUTEX')
+        gene = ekb_kstring_from_text('TP53')
+        content.set('gene', gene)
+
+        msg = get_request(content)
+        return msg, content
+
+    def check_response_to_message(self, output):
+        assert output.head() == 'SUCCESS', output
+        mutex = output.get('mutex')
+        assert len(mutex) == 4
+        assert 'CDH1' in mutex[0]['group']
+
 
 # TODO: Implement tests for the cases below
 # ca.find_next_correlation('AKT1',print_result)
@@ -153,6 +189,4 @@ class TestCommonUpstreams(_IntegrationTest):
 # # ca.find_next_correlation('AKT1',print_result)
 # ca.find_correlation_between('AKT1', 'BRAF')
 # ca.find_all_correlations('AKT1')
-# print(ca.find_mut_sig('TP53'))
-# ca.find_common_upstreams('RAC1', 'RAC2')
-# ca.find_common_upstreams(['AKT1', 'BRAF', 'MAPK1'], print_result)
+
