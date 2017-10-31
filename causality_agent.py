@@ -391,8 +391,9 @@ class CausalityAgent:
             else:
                 return "not significant"
 
-    # Find common upstreams between gene1 and gene2
     def find_common_upstreams(self, genes):
+        """ Find common upstreams between a list of genes"""
+
         with self.cadb:
             cur = self.cadb.cursor()
 
@@ -407,10 +408,8 @@ class CausalityAgent:
                                     "s1.Rel = 'controls-state-change-of' AND s2.Rel = s1.Rel)",
                                     (gene1, gene2)).fetchall()
 
-
             for i in range(2, len(genes)):
                 gene = genes[i]
-
 
                 upstream_arr = []
                 for upstream in upstreams:
@@ -493,4 +492,4 @@ def print_result(res):
 # db.find_all_correlations('AKT1')
 # print(db.find_mut_sig('TP53'))
 # db.find_common_upstreams('RAC1', 'RAC2')
-# db.find_common_upstreams(['AKT1', 'BRAF', 'MAPK1'], print_result)
+# print(db.find_common_upstreams(['AKT1', 'BRAF', 'MAPK1']))

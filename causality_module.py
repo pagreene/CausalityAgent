@@ -38,11 +38,16 @@ class CausalityModule(Bioagent):
         if not target_arg:
             raise ValueError("Target is empty")
 
-        target_name = _get_term_name(target_arg)
-        source_name = _get_term_name(source_arg)
-        if not target_name or not source_name:
+        target_names = _get_term_names(target_arg)
+        source_names = _get_term_names(source_arg)
+
+
+        if not target_names or not source_names:
             reply = self.make_failure('NO_PATH_FOUND')
             return reply
+
+        source_name = source_names[0]
+        target_name = target_names[0]
 
         target = {'id': target_name, 'pSite': ''}
         source = {'id': source_name, 'pSite': ''}
@@ -81,11 +86,13 @@ class CausalityModule(Bioagent):
 
         if not target_arg:
             raise ValueError("Target is empty")
-
-        target_name = _get_term_name(target_arg)
-        if not target_name:
+        
+        target_names = _get_term_names(target_arg)
+        if not target_names:
             reply = self.make_failure('MISSING_MECHANISM')
             return reply
+        target_name = target_names[0]
+
 
         rel_map = {
             "phosphorylation": "phosphorylates",
@@ -127,10 +134,11 @@ class CausalityModule(Bioagent):
         if not source_arg:
             raise ValueError("Source is empty")
 
-        source_name = _get_term_name(source_arg)
-        if not source_name:
+        source_names = _get_term_names(source_arg)
+        if not source_names:
             reply = self.make_failure('MISSING_MECHANISM')
             return reply
+        source_name = source_names[0]
 
         rel_map = {
             "phosphorylation": "is-phosphorylated-by",
@@ -142,9 +150,7 @@ class CausalityModule(Bioagent):
             "modulate": "modulates",
         }
 
-
-        source = {'id': source_name, 'pSite': ' ',
-                  'rel': rel_map[rel]}
+        source = {'id': source_name, 'pSite': ' ','rel': rel_map[rel]}
 
         result = self.CA.find_causality_targets(source)
 
@@ -163,16 +169,61 @@ class CausalityModule(Bioagent):
 
         return reply
 
-def _get_term_name(term_str):
+    def respond_find_common_upstreams(self, content):
+        """Response content to find-common-upstreams request"""
+
+        genes_arg = content.gets('GENES')
+
+        if not genes_arg:
+            raise ValueError("Gene list is empty")
+
+
+        gene_names = _get_term_names(genes_arg)
+
+        if not gene_names:
+            reply = self.make_failure('MISSING_MECHANISM')
+            return reply
+
+        gene_list = []
+        for gene_name in gene_names:
+            gene_list.append(str(gene_name))
+
+        print(gene_list)
+        result = self.CA.find_common_upstreams(gene_list)
+
+        if not result:
+            reply = self.make_failure('MISSING_MECHANISM')
+            return reply
+
+        reply = KQMLList('SUCCESS')
+        reply.sets('upstreams', result)
+
+        return reply
+
+def _get_term_names(term_str):
     tp = TripsProcessor(term_str)
     terms = tp.tree.findall('TERM')
     if not terms:
         return None
-    term_id = terms[0].attrib['id']
-    agent = tp._get_agent_by_id(term_id, None)
-    if agent is None:
+
+    agent_names = []
+    for term in terms:
+        term_id = term.attrib['id']
+
+        agent = tp._get_agent_by_id(term_id, None)
+
+        if agent is not None:
+            if isinstance(agent, list):
+                for a in agent:
+                    if a.name:
+                        agent_names.append(a.name)
+            else:
+                agent_names.append(agent.name)
+
+    if len(agent_names) == 0:
         return None
-    return agent.name
+
+    return agent_names
 
 def make_indra_json(causality):
     """Convert causality response to indra format
