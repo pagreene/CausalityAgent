@@ -1,7 +1,6 @@
 import re
 import os
 import sqlite3
-import logging
 
 class CausalityAgent:
     def __init__(self, path):
@@ -127,25 +126,32 @@ class CausalityAgent:
         pnnl_file.close()
 
     def populate_mutsig_table(self, path):
-        mutsig_path = os.path.join(path, 'scores-mutsig.txt')
-        mutsig_file = open(mutsig_path, 'r')
+
+        mutsig_path = os.path.join(path, 'TCGA')
+        folders = os.listdir(mutsig_path)
 
         with self.cadb:
             cur = self.cadb.cursor()
             cur.execute("DROP TABLE IF EXISTS MutSig")
             try:
-                cur.execute("CREATE TABLE MutSig(Id TEXT,  PVal REAL)")
+                cur.execute("CREATE TABLE MutSig(Id TEXT, Disease TEXT, PVal REAL, QVal Real)")
             except:
-                pass
+                raise RuntimeError("Can not create MutSig table")
 
-            for line in mutsig_file:
-                vals = line.split('\t')
-                gene_id = vals[1]
-                p_val = vals[17]
-                cur.execute("INSERT INTO MutSig VALUES(?, ?)", (gene_id,  p_val))
+            for folder in folders:
+                disease_path = os.path.join(mutsig_path, folder)
+                file_path = os.path.join(disease_path, 'scores-mutsig.txt')
+                mutsig_file = open(file_path, 'r')
+                next(mutsig_file) # skip the header line
 
-        mutsig_file.close()
+                for line in mutsig_file:
+                    vals = line.split('\t')
+                    gene_id = vals[1]
+                    p_val = vals[17]
+                    q_val = vals[18].rstrip('\n')
+                    cur.execute("INSERT INTO MutSig VALUES(?, ?, ?, ?)", (gene_id, folder,  p_val, q_val))
 
+                mutsig_file.close()
 
 
     # Find the correlations with a causal explanation
@@ -379,14 +385,15 @@ class CausalityAgent:
             else:
                 return ''
 
-    def find_mutation_significance(self, gene):
+    def find_mutation_significance(self, gene, disease):
         """
         :param gene: single gene name
         :return: string, mutation significance
         """
         with self.cadb:
             cur = self.cadb.cursor()
-            p_val = cur.execute("SELECT PVal FROM MutSig WHERE Id = ?", (gene,)).fetchone()
+
+            p_val = cur.execute("SELECT PVal FROM MutSig WHERE Id = ? AND Disease = ?", (gene, disease)).fetchone()
 
             if p_val[0] < 0.01:
                 return 'highly significant'
@@ -481,7 +488,7 @@ def print_result(res):
 # db.find_causality_targets({'id':'MAPK1', 'rel': 'phosphorylates'}, print_result)
 # db.find_causality_targets({'id':'BRAF', 'rel': 'is-phosphorylated-by'}, print_result)
 #
-# db.populate_mutsig_table()
+# db.populate_mutsig_table('./resources')
 # db.populate_sif_relations_table()
 
 # db.populate_explained_table()
@@ -497,6 +504,6 @@ def print_result(res):
 # # db.find_next_correlation('AKT1',print_result)
 # db.find_correlation_between('AKT1', 'BRAF')
 # db.find_all_correlations('AKT1')
-# print(db.find_mutation_significance('TP53'))
+# print(db.find_mutation_significance('TP53', 'OV'))
 # db.find_common_upstreams('RAC1', 'RAC2')
 # print(db.find_common_upstreams(['AKT1', 'BRAF', 'MAPK1']))

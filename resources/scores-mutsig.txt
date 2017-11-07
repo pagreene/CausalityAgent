@@ -1,3 +1,4 @@
+rank	gene	longname	codelen	nnei	nncd	nsil	nmis	nstp	nspl	nind	nnon	npat	nsite	pCV	pCL	pFN	p	q
 1	TP53	tumor protein p53	1889	173	0	0	255	39	44	51	389	385	177	1.000000e-16	1.000000e-05	1.000000e-05	1.000000e-16	1.825600e-12
 2	RB1	retinoblastoma 1 (including osteosarcoma)	3704	12	0	0	5	4	2	4	15	15	15	1.000000e-16	1	1.950000e-01	1.998401e-15	1.283655e-11
 3	BRCA1	breast cancer 1, early onset	5750	8	0	0	1	7	1	9	18	18	18	1.000000e-16	1	2.740000e-01	2.109424e-15	1.283655e-11

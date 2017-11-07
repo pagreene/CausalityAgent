@@ -14,6 +14,42 @@ logger = logging.getLogger('CausalA')
 
 _resource_dir = os.path.dirname(os.path.realpath(__file__)) + '/resources/'
 
+cancerTypes = [
+        {'abbr': "ACC", 'longName':"Adrenocortical carcinoma"},
+        {'abbr': "BLCA",'longName':"Bladder Urothelial Carcinoma"},
+        {'abbr':"BRCA",'longName':"Breast invasive carcinoma"},
+        {'abbr':"CESC",'longName':"Cervical squamous cell carcinoma and endocervical adenocarcinoma"},
+        {'abbr':"CHOL",'longName':"Cholangiocarcinoma"},
+        {'abbr':"COAD",'longName':"Colon adenocarcinoma"},
+        {'abbr':"COADREAD",'longName':"Colorectal cancer"},
+        {'abbr':"DLBC",'longName':"Lymphoid Neoplasm Diffuse Large B-cell Lymphoma"},
+        {'abbr':"GBM",'longName':"Glioblastoma multiforme"},
+        {'abbr':"GBMLGG",'longName':"Glioblastoma multiforme/Brain Lower Grade Glioma"},
+        {'abbr':"HNSC",'longName':"Head and Neck squamous cell carcinoma"},
+        {'abbr':"KICH",'longName':"Kidney Chromophobe"},
+        {'abbr':"KIPAN",'longName':"Pan-Kidney"},
+        {'abbr':"KIRC",'longName':"Kidney renal clear cell carcinoma"},
+        {'abbr':"KIRP",'longName':"Kidney renal papillary cell carcinoma"},
+        {'abbr':"LAML",'longName':"	Acute Myeloid Leukemia"},
+        {'abbr':"LGG",'longName':"Brain Lower Grade Glioma"},
+        {'abbr':"LIHC",'longName':"Liver hepatocellular carcinoma"},
+        {'abbr':"LUAD",'longName':"Lung adenocarcinoma"},
+        {'abbr':"LUSC",'longName':"Lung squamous cell carcinoma"},
+        {'abbr':"OV",'longName':"Ovarian serous cystadenocarcinoma"},
+        {'abbr':"PAAD",'longName':"Pancreatic adenocarcinoma"},
+        {'abbr':"PCPG",'longName':"Pheochromocytoma and Paraganglioma"},
+        {'abbr':"PRAD",'longName':"Prostate adenocarcinoma"},
+        {'abbr':"READ",'longName':"Rectum adenocarcinoma"},
+        {'abbr':"SARC", 'longName':"Sarcoma"},
+        {'abbr':"SKCM", 'longName':"Skin Cutaneous Melanoma"},
+        {'abbr':"STAD", 'longName':"Stomach adenocarcinoma"},
+        {'abbr':"STES", 'longName':"Stomach and Esophageal carcinoma"},
+        {'abbr':"TGCT", 'longName':"Testicular Germ Cell Tumors"},
+        {'abbr':"THCA", 'longName':"Thyroid carcinoma"},
+        {'abbr':"UCEC", 'longName':"Uterine Corpus Endometrial Carcinoma"},
+        {'abbr':"UCS", 'longName':"Uterine Carcinosarcoma"},
+        {'abbr':"UVM", 'longName':"Uveal Melanoma"}]
+
 
 class CausalityModule(Bioagent):
     name = 'CausalA'
@@ -199,6 +235,11 @@ class CausalityModule(Bioagent):
         """Response content to find-mutation-significance request"""
         gene_arg = content.gets('GENE')
 
+        disease_arg = content.gets('DISEASE')
+
+        print("disease_arg")
+        print(disease_arg)
+
         if not gene_arg:
             raise ValueError("Source is empty")
 
@@ -208,7 +249,16 @@ class CausalityModule(Bioagent):
             return reply
         gene_name = gene_names[0]
 
-        result = self.CA.find_mutation_significance(gene_name)
+        if not disease_arg:
+            result = self.CA.find_mutation_significance(gene_name, 'OV') # default is ovarian cancer
+        else:
+            disease_names = _get_term_names(disease_arg)
+            if not disease_names:
+                reply = self.make_failure('MISSING_MECHANISM')
+                return reply
+            disease_name = disease_names[0]
+            print(disease_name)
+            result = self.CA.find_mutation_significance(gene_name, disease_name)  # default is ovarian cancer
 
         if not result:
             reply = self.make_failure('MISSING_MECHANISM')
@@ -218,6 +268,7 @@ class CausalityModule(Bioagent):
         reply.sets('mutsig', result)
 
         return reply
+
 
     def respond_find_mutex(self, content):
         """Response content to find-mutation-significance request"""
@@ -270,7 +321,6 @@ def _get_term_names(term_str):
         return None
 
     return agent_names
-
 
 def make_indra_json(causality):
     """Convert causality response to indra format
