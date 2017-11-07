@@ -100,6 +100,7 @@ class TestCausalityTarget(_IntegrationTest):
         assert stmts[0].residue == 'S'
         assert stmts[0].position == '65'
 
+
 class TestCausalitySource(_IntegrationTest):
     def __init__(self, *args):
         super(TestCausalitySource, self).__init__(CausalityModule)
@@ -122,6 +123,28 @@ class TestCausalitySource(_IntegrationTest):
         assert stmts[0].enz.name == 'MAPK1'
         assert stmts[0].residue == 'S'
         assert stmts[0].position == '151'
+
+
+class TestNextCorrelation(_IntegrationTest):
+    def __init__(self, *args):
+        super(TestNextCorrelation, self).__init__(CausalityModule)
+
+    def create_message(self):
+        source = ekb_kstring_from_text('AKT1')
+        content = KQMLList('DATASET-CORRELATED-ENTITY')
+        content.set('source', source)
+        msg = get_request(content)
+        return msg, content
+
+    def check_response_to_message(self, output):
+        assert output.head() == 'SUCCESS', output
+        target = output.gets('target')
+        correlation = output.gets('correlation')
+        explainable = output.gets('explainable')
+
+        assert target == 'BRAF'
+        assert correlation == str(0.7610843243760473)
+        assert explainable == '\"explainable\"'
 
 
 class TestCommonUpstreams(_IntegrationTest):

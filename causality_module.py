@@ -201,6 +201,25 @@ class CausalityModule(Bioagent):
 
         return reply
 
+    def respond_dataset_correlated_entity(self, content):
+        source_arg = content.gets('SOURCE')
+        if not source_arg:
+            raise ValueError("Source is empty")
+
+        source_names = _get_term_names(source_arg)
+        if not source_names:
+            reply = self.make_failure('MISSING_MECHANISM')
+            return reply
+        source_name = source_names[0]
+        res = self.CA.find_next_correlation(source_name)
+        reply = KQMLList('SUCCESS')
+        reply.sets('target', res['id2'])
+        reply.sets('correlation', str(res['correlation']))
+        reply.sets('explainable', res['explainable'])
+
+        return reply;
+
+
     def respond_find_common_upstreams(self, content):
         """Response content to find-common-upstreams request"""
 
