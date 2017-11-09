@@ -1,225 +1,30 @@
 import re
 import os
 import sqlite3
+from database_initializer import DatabaseInitializer
 
 class CausalityAgent:
     def __init__(self, path):
         self.corr_ind = 0
         self.causality_ind = 0
 
-        db_file = os.path.join(path, 'pnnl-dataset.db')
-        if os.path.isfile(db_file):
-            self.cadb = sqlite3.connect(db_file)
-        else:
-            # create table if it doesn't exist
-            fp = open(db_file, 'w')
-            fp.close()
-            self.cadb = sqlite3.connect(db_file)
-            self.populate_tables(path)
+        self.db_initializer = DatabaseInitializer(path)
+
+        self.cadb = self.db_initializer.cadb
 
     def __del__(self):
         self.cadb.close()
 
-    def populate_tables(self, path):
-        self.populate_correlation_table(path)
-        self.populate_causality_table(path)
-        self.populate_mutsig_table(path)
-        self.populate_unexplained_table()
-        self.populate_explained_table()
-        self.populate_sif_relations_table(path)
-        self.populate_mutex_table(path)
-
-
-    def populate_causality_table(self, path):
-        opposite_rel = {
-            'phosphorylates': 'is-phosphorylated-by',
-            'dephosphorylates': 'is-dephosphorylated-by',
-            'upregulates-expression': 'expression-is-upregulated-by',
-            'downregulates-expression': 'expression-is-downregulated-by',
-        }
-
-        causality_path = os.path.join(path, 'causative-data-centric.sif')
-        causality_file = open(causality_path, 'r')
-
+    def get_tcga_abbr(self, long_name):
         with self.cadb:
             cur = self.cadb.cursor()
-            try:
-                cur.execute(
-                    "CREATE TABLE Causality(Id1 TEXT, PSite1 TEXT, Id2 TEXT, PSite2 TEXT, Rel TEXT, UriStr TEXT)")
-            except:
-                pass
 
-            for line in causality_file:
-                vals = line.split('\t')
-                id_str1 = vals[0].upper().split('-')
-                id1 = id_str1[0]
-                if len(id_str1) > 1:
-                    p_site1 = id_str1[1]
-                else:
-                    p_site1 = ' '
+            name = cur.execute("SELECT Abbr FROM TCGA WHERE longName = ?", (long_name,)).fetchone()
 
-                id_str2 = vals[2].upper().split('-')
-                id2 = id_str2[0]
+            if not name:
+                return None
 
-                if len(id_str2) > 1:
-                    p_site2 = id_str2[1]
-                else:
-                    p_site2 = ' '
-
-                rel = vals[1]
-
-                uri_arr = []
-                if vals[3]:
-                    uri_arr = vals[3].split(" ")
-
-                if len(uri_arr) == 0:
-                    uri_arr = [vals[3]]
-
-                uri_str = ""
-                for uri in uri_arr:
-                    uri_str = uri_str + "uri= " + uri + "&"
-
-                opp_rel = opposite_rel[rel]
-                cur.execute("INSERT INTO Causality VALUES(?, ?, ?, ?, ?, ?)", (id1, p_site1, id2, p_site2, rel, uri_str))
-                # opposite relation
-                cur.execute("INSERT INTO Causality VALUES(?, ?, ?, ?, ?, ?)", (id2, p_site2, id1, p_site1, opp_rel, uri_str))
-
-        causality_file.close()
-
-    def populate_correlation_table(self, path):
-        pnnl_path = os.path.join(path, 'PNNL-ovarian-correlations.txt')
-        pnnl_file = open(pnnl_path, 'r')
-
-        with self.cadb:
-            cur = self.cadb.cursor()
-            try:
-                cur.execute(
-                    "CREATE TABLE Correlations(Id1 TEXT, PSite1 TEXT, Id2 TEXT, PSite2 TEXT, Corr REAL, PVal REAL)")
-            except:
-                pass
-
-            for line in pnnl_file:
-                if line.find('/') > -1:  # incorrectly formatted strings
-                    continue
-                vals = line.split('\t')
-                id_str1 = vals[0].upper().split('-')
-                id1 = id_str1[0]
-                if len(id_str1) > 1:
-                    p_site1 = id_str1[1]
-                else:
-                    p_site1 = ' '
-
-                id_str2 = vals[1].upper().split('-')
-                id2 = id_str2[0]
-
-                if len(id_str2) > 1:
-                    p_site2 = id_str2[1]
-                else:
-                    p_site2 = ' '
-
-                corr = float(vals[2].rstrip('\n'))
-
-                p_val = float(vals[3].rstrip('\n'))
-
-                cur.execute("INSERT INTO Correlations VALUES(?, ?, ?, ?, ?, ?)", (id1, p_site1, id2, p_site2, corr, p_val))
-
-        pnnl_file.close()
-
-    def populate_mutsig_table(self, path):
-
-        mutsig_path = os.path.join(path, 'TCGA')
-        folders = os.listdir(mutsig_path)
-
-        with self.cadb:
-            cur = self.cadb.cursor()
-            cur.execute("DROP TABLE IF EXISTS MutSig")
-            try:
-                cur.execute("CREATE TABLE MutSig(Id TEXT, Disease TEXT, PVal REAL, QVal Real)")
-            except:
-                raise RuntimeError("Can not create MutSig table")
-
-            for folder in folders:
-                disease_path = os.path.join(mutsig_path, folder)
-                file_path = os.path.join(disease_path, 'scores-mutsig.txt')
-                mutsig_file = open(file_path, 'r')
-                next(mutsig_file) # skip the header line
-
-                for line in mutsig_file:
-                    vals = line.split('\t')
-                    gene_id = vals[1]
-                    p_val = vals[17]
-                    q_val = vals[18].rstrip('\n')
-                    cur.execute("INSERT INTO MutSig VALUES(?, ?, ?, ?)", (gene_id, folder,  p_val, q_val))
-
-                mutsig_file.close()
-
-
-    # Find the correlations with a causal explanation
-    def populate_explained_table(self):
-        with self.cadb:
-            cur = self.cadb.cursor()
-            cur.execute("DROP TABLE IF EXISTS Explained_Correlations")
-            cur.execute("CREATE TABLE Explained_Correlations AS SELECT * FROM Correlations "
-                        "LEFT JOIN Causality ON Causality.Id1 = Correlations.Id1 AND Causality.Id2 = Correlations.Id2  "
-                        "AND Causality.PSite1 = Correlations.PSite1 AND Causality.PSite2 = Correlations.PSite2 "
-                        "WHERE Rel IS NOT NULL",
-                        ).fetchall()
-
-    # Find the correlations without a causal explanation
-    def populate_unexplained_table(self):
-        with self.cadb:
-            cur = self.cadb.cursor()
-            cur.execute("DROP TABLE IF EXISTS Unexplained_Correlations")
-            cur.execute("CREATE TABLE Unexplained_Correlations AS SELECT * FROM Correlations "
-                        "LEFT JOIN Causality ON Causality.Id1 = Correlations.Id1 AND Causality.Id2 = Correlations.Id2  "
-                        "AND Causality.PSite1 = Correlations.PSite1 AND Causality.PSite2 = Correlations.PSite2 "
-                        "WHERE Rel IS NULL",
-                        ).fetchall()
-
-    #All sif relations from PathwayCommons
-    def populate_sif_relations_table(self, path):
-        pc_path = os.path.join(path, 'PC.sif')
-        pc_file = open(pc_path, 'r')
-
-        with self.cadb:
-            cur = self.cadb.cursor()
-            cur.execute("DROP TABLE IF EXISTS Sif_Relations")
-            cur.execute("CREATE TABLE Sif_Relations(Id1 TEXT,  Id2 TEXT, Rel TEXT)")
-            for line in pc_file:
-                vals = line.split('\t')
-                id1 = vals[0].upper()
-                id2 = (vals[2].rstrip('\n')).upper()
-                rel = vals[1]
-                cur.execute("INSERT INTO Sif_Relations VALUES(?, ?, ?)", (id1, id2, rel))
-
-        pc_file.close()
-
-    def populate_mutex_table(self, path):
-        mutex_path = os.path.join(path, 'ranked-groups.txt')
-        mutex_file = open(mutex_path, 'r')
-
-        with self.cadb:
-            cur = self.cadb.cursor()
-            cur.execute("DROP TABLE IF EXISTS Mutex")
-            try:
-                cur.execute("CREATE TABLE Mutex(Id1 TEXT, Id2 TEXT, Id3 TEXT, Score REAL)")
-            except:
-                pass
-
-            for line in mutex_file:
-                vals = line.split('\t')
-                vals[len(vals) - 1] = vals[len(vals) - 1].rstrip('\n')
-                score = vals[0]
-                gene1 = vals[2]
-                gene2 = vals[3]
-                if len(vals) > 4:
-                    gene3 = vals[4]
-                else:
-                    gene3 = None
-
-                cur.execute("INSERT INTO Mutex VALUES(?, ?, ?, ?)", (gene1, gene2, gene3, score))
-
-        mutex_file.close()
+            return name[0]
 
     # Convert the row from sql table into causality object
     # Positions need to be trimmed to correct PC formatting. E.g. s100S for pSite
@@ -435,7 +240,7 @@ class CausalityAgent:
             #format upstreams
             upstream_list = []
             for genes in upstreams:
-                upstream_list.append({'name': genes[0]})
+                upstream_list.append(str(genes[0]).encode('utf8'))
 
             return upstream_list
 
@@ -462,9 +267,10 @@ class CausalityAgent:
         # format groups
         mutex_list = []
         for group in groups:
-            mutex = {'group': [], 'score': group[len(group) - 1]}
+            mutex = {'group': [], 'score': str(round(group[len(group) - 1], 2))}
             for i in range(len(group) - 1):
-                mutex['group'].append(group[i])
+                if group[i] is not None:
+                    mutex['group'].append(group[i].encode('utf8'))
             mutex_list.append(mutex)
 
         return mutex_list
@@ -472,9 +278,12 @@ class CausalityAgent:
 #test
 def print_result(res):
     print(res)
-# db = CausalityAgent('./resources')
+# ca = CausalityAgent('./resources')
 
-# res = db.find_causality({'source': {'id':'MAPK1'}, 'target': {'id': ['JUND', 'ERF']}})
+# ca.populate_tcga_names_table('./resources')
+
+# print(ca.get_tcga_abbr("Ovarian serous cystadenocarcinoma"))
+# res = ca.find_causality({'source': {'id':'MAPK1'}, 'target': {'id': ['JUND', 'ERF']}})
 
 # uri_str = res['uri_str']
 
@@ -483,27 +292,27 @@ def print_result(res):
 # print(html)
 
 
-# db.find_causality_targets({'id': ['MAPK1', 'BRAF'], 'rel': 'phosphorylates'})
+# ca.find_causality_targets({'id': ['MAPK1', 'BRAF'], 'rel': 'phosphorylates'})
 
-# db.find_causality_targets({'id':'MAPK1', 'rel': 'phosphorylates'}, print_result)
-# db.find_causality_targets({'id':'BRAF', 'rel': 'is-phosphorylated-by'}, print_result)
+# ca.find_causality_targets({'id':'MAPK1', 'rel': 'phosphorylates'}, print_result)
+# ca.find_causality_targets({'id':'BRAF', 'rel': 'is-phosphorylated-by'}, print_result)
 #
-# db.populate_mutsig_table('./resources')
-# db.populate_sif_relations_table()
+# ca.populate_mutsig_table('./resources')
+# ca.populate_sif_relations_table()
 
-# db.populate_explained_table()
-# print(db.find_next_unexplained_correlation('AKT1'))
-# db.find_next_unexplained_correlation('AKT1', print_result)
-# db.find_next_unexplained_correlation('AKT1', print_result)
-# # db.find_causality_targets({'source':{'id' :'BRAF', 'pSite' :'S365S', 'rel': 'is-phosphorylated-by'}},print_result)
-# db.find_next_correlation('AKT1',print_result)
-# db.find_next_correlation('AKT1',print_result)
-# db.find_next_correlation('AKT1',print_result)
-# db.find_next_correlation('AKT1',print_result)
-# db.find_next_correlation('AKT1',print_result)
-# # db.find_next_correlation('AKT1',print_result)
-# db.find_correlation_between('AKT1', 'BRAF')
-# db.find_all_correlations('AKT1')
-# print(db.find_mutation_significance('TP53', 'OV'))
-# db.find_common_upstreams('RAC1', 'RAC2')
-# print(db.find_common_upstreams(['AKT1', 'BRAF', 'MAPK1']))
+# ca.populate_explained_table()
+# print(ca.find_next_unexplained_correlation('AKT1'))
+# ca.find_next_unexplained_correlation('AKT1', print_result)
+# ca.find_next_unexplained_correlation('AKT1', print_result)
+# # ca.find_causality_targets({'source':{'id' :'BRAF', 'pSite' :'S365S', 'rel': 'is-phosphorylated-by'}},print_result)
+# ca.find_next_correlation('AKT1',print_result)
+# ca.find_next_correlation('AKT1',print_result)
+# ca.find_next_correlation('AKT1',print_result)
+# ca.find_next_correlation('AKT1',print_result)
+# ca.find_next_correlation('AKT1',print_result)
+# # ca.find_next_correlation('AKT1',print_result)
+# ca.find_correlation_between('AKT1', 'BRAF')
+# ca.find_all_correlations('AKT1')
+# print(ca.find_mutation_significance('TP53', 'OV'))
+# ca.find_common_upstreams('RAC1', 'RAC2')
+# print(ca.find_common_upstreams(['AKT1', 'BRAF', 'MAPK1']))

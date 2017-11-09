@@ -14,49 +14,13 @@ logger = logging.getLogger('CausalA')
 
 _resource_dir = os.path.dirname(os.path.realpath(__file__)) + '/resources/'
 
-cancerTypes = [
-        {'abbr': "ACC", 'longName':"Adrenocortical carcinoma"},
-        {'abbr': "BLCA",'longName':"Bladder Urothelial Carcinoma"},
-        {'abbr':"BRCA",'longName':"Breast invasive carcinoma"},
-        {'abbr':"CESC",'longName':"Cervical squamous cell carcinoma and endocervical adenocarcinoma"},
-        {'abbr':"CHOL",'longName':"Cholangiocarcinoma"},
-        {'abbr':"COAD",'longName':"Colon adenocarcinoma"},
-        {'abbr':"COADREAD",'longName':"Colorectal cancer"},
-        {'abbr':"DLBC",'longName':"Lymphoid Neoplasm Diffuse Large B-cell Lymphoma"},
-        {'abbr':"GBM",'longName':"Glioblastoma multiforme"},
-        {'abbr':"GBMLGG",'longName':"Glioblastoma multiforme/Brain Lower Grade Glioma"},
-        {'abbr':"HNSC",'longName':"Head and Neck squamous cell carcinoma"},
-        {'abbr':"KICH",'longName':"Kidney Chromophobe"},
-        {'abbr':"KIPAN",'longName':"Pan-Kidney"},
-        {'abbr':"KIRC",'longName':"Kidney renal clear cell carcinoma"},
-        {'abbr':"KIRP",'longName':"Kidney renal papillary cell carcinoma"},
-        {'abbr':"LAML",'longName':"	Acute Myeloid Leukemia"},
-        {'abbr':"LGG",'longName':"Brain Lower Grade Glioma"},
-        {'abbr':"LIHC",'longName':"Liver hepatocellular carcinoma"},
-        {'abbr':"LUAD",'longName':"Lung adenocarcinoma"},
-        {'abbr':"LUSC",'longName':"Lung squamous cell carcinoma"},
-        {'abbr':"OV",'longName':"Ovarian serous cystadenocarcinoma"},
-        {'abbr':"PAAD",'longName':"Pancreatic adenocarcinoma"},
-        {'abbr':"PCPG",'longName':"Pheochromocytoma and Paraganglioma"},
-        {'abbr':"PRAD",'longName':"Prostate adenocarcinoma"},
-        {'abbr':"READ",'longName':"Rectum adenocarcinoma"},
-        {'abbr':"SARC", 'longName':"Sarcoma"},
-        {'abbr':"SKCM", 'longName':"Skin Cutaneous Melanoma"},
-        {'abbr':"STAD", 'longName':"Stomach adenocarcinoma"},
-        {'abbr':"STES", 'longName':"Stomach and Esophageal carcinoma"},
-        {'abbr':"TGCT", 'longName':"Testicular Germ Cell Tumors"},
-        {'abbr':"THCA", 'longName':"Thyroid carcinoma"},
-        {'abbr':"UCEC", 'longName':"Uterine Corpus Endometrial Carcinoma"},
-        {'abbr':"UCS", 'longName':"Uterine Carcinosarcoma"},
-        {'abbr':"UVM", 'longName':"Uveal Melanoma"}]
-
 
 class CausalityModule(Bioagent):
     name = 'CausalA'
     tasks = ['FIND-CAUSAL-PATH', 'FIND-CAUSALITY-TARGET',
              'FIND-CAUSALITY-SOURCE',
              'DATASET-CORRELATED-ENTITY', 'FIND-COMMON-UPSTREAMS',
-             'RESTART-CAUSALITY-INDICES', 'FIND-MUTATION-SIGNIFICANCE', 'FIND-MUTEX']
+             'RESTART-CAUSALITY-INDICES', 'FIND-MUTEX', 'FIND-MUTATION-SIGNIFICANCE']
 
     def __init__(self, **kwargs):
         self.CA = CausalityAgent(_resource_dir)
@@ -78,8 +42,7 @@ class CausalityModule(Bioagent):
         source_names = _get_term_names(source_arg)
 
         if not target_names or not source_names:
-            reply = self.make_failure('NO_PATH_FOUND')
-            return reply
+            return self.make_failure('NO_PATH_FOUND')
 
         source_name = source_names[0]
         target_name = target_names[0]
@@ -90,8 +53,7 @@ class CausalityModule(Bioagent):
         result = self.CA.find_causality({'source': source, 'target': target})
 
         if not result:
-            reply = self.make_failure('NO_PATH_FOUND')
-            return reply
+            return self.make_failure('NO_PATH_FOUND')
 
         indra_json = json.dumps([make_indra_json(result)])
 
@@ -124,8 +86,7 @@ class CausalityModule(Bioagent):
         
         target_names = _get_term_names(target_arg)
         if not target_names:
-            reply = self.make_failure('MISSING_MECHANISM')
-            return reply
+            return self.make_failure('MISSING_MECHANISM')
         target_name = target_names[0]
 
 
@@ -143,8 +104,7 @@ class CausalityModule(Bioagent):
         result = self.CA.find_causality_targets(target)
 
         if not result:
-            reply = self.make_failure('MISSING_MECHANISM')
-            return reply
+            return self.make_failure('MISSING_MECHANISM')
 
         # Send PC links to provenance tab
         # Multiple interactions are sent separately
@@ -168,8 +128,7 @@ class CausalityModule(Bioagent):
 
         source_names = _get_term_names(source_arg)
         if not source_names:
-            reply = self.make_failure('MISSING_MECHANISM')
-            return reply
+            return self.make_failure('MISSING_MECHANISM')
         source_name = source_names[0]
 
         rel_map = {
@@ -187,8 +146,7 @@ class CausalityModule(Bioagent):
         result = self.CA.find_causality_targets(source)
 
         if not result:
-            reply = self.make_failure('MISSING_MECHANISM')
-            return reply
+            return self.make_failure('MISSING_MECHANISM')
 
         # Multiple interactions are sent separately
         for r in result:
@@ -208,8 +166,8 @@ class CausalityModule(Bioagent):
 
         source_names = _get_term_names(source_arg)
         if not source_names:
-            reply = self.make_failure('MISSING_MECHANISM')
-            return reply
+            return self.make_failure('MISSING_MECHANISM')
+
         source_name = source_names[0]
         res = self.CA.find_next_correlation(source_name)
         reply = KQMLList('SUCCESS')
@@ -217,7 +175,7 @@ class CausalityModule(Bioagent):
         reply.sets('correlation', str(res['correlation']))
         reply.sets('explainable', res['explainable'])
 
-        return reply;
+        return reply
 
 
     def respond_find_common_upstreams(self, content):
@@ -231,22 +189,20 @@ class CausalityModule(Bioagent):
         gene_names = _get_term_names(genes_arg)
 
         if not gene_names:
-            reply = self.make_failure('MISSING_MECHANISM')
-            return reply
+            return self.make_failure('MISSING_MECHANISM')
 
         gene_list = []
         for gene_name in gene_names:
             gene_list.append(str(gene_name))
 
-        print(gene_list)
         result = self.CA.find_common_upstreams(gene_list)
 
         if not result:
-            reply = self.make_failure('MISSING_MECHANISM')
-            return reply
+            return self.make_failure('MISSING_MECHANISM')
 
         reply = KQMLList('SUCCESS')
-        reply.sets('upstreams', result)
+        reply.sets('upstreams', str(result))
+
 
         return reply
 
@@ -254,40 +210,36 @@ class CausalityModule(Bioagent):
         """Response content to find-mutation-significance request"""
         gene_arg = content.gets('GENE')
 
-        disease_arg = content.gets('DISEASE')
-
-        print("disease_arg")
-        print(disease_arg)
-
         if not gene_arg:
-            raise ValueError("Source is empty")
+            self.make_failure('MISSING_MECHANISM')
 
         gene_names = _get_term_names(gene_arg)
         if not gene_names:
-            reply = self.make_failure('MISSING_MECHANISM')
-            return reply
+            return self.make_failure('MISSING_MECHANISM')
         gene_name = gene_names[0]
 
+        disease_arg = content.gets('DISEASE')
         if not disease_arg:
-            result = self.CA.find_mutation_significance(gene_name, 'OV') # default is ovarian cancer
-        else:
-            disease_names = _get_term_names(disease_arg)
-            if not disease_names:
-                reply = self.make_failure('MISSING_MECHANISM')
-                return reply
-            disease_name = disease_names[0]
-            print(disease_name)
-            result = self.CA.find_mutation_significance(gene_name, disease_name)  # default is ovarian cancer
+            return self.make_failure('MISSING_MECHANISM')
+
+        disease_names = _get_term_names(disease_arg)
+        if not disease_names:
+            return self.make_failure('INVALID_DISEASE')
+
+        disease_name = disease_names[0].replace("-", " ").lower()
+        disease_abbr = self.CA.get_tcga_abbr(disease_name)
+        if disease_abbr is None:
+            return self.make_failure('INVALID_DISEASE')
+
+        result = self.CA.find_mutation_significance(gene_name, disease_abbr)
 
         if not result:
-            reply = self.make_failure('MISSING_MECHANISM')
-            return reply
+            return self.make_failure('INVALID_DISEASE')
 
         reply = KQMLList('SUCCESS')
         reply.sets('mutsig', result)
 
         return reply
-
 
     def respond_find_mutex(self, content):
         """Response content to find-mutation-significance request"""
@@ -299,18 +251,18 @@ class CausalityModule(Bioagent):
 
         gene_names = _get_term_names(gene_arg)
         if not gene_names:
-            reply = self.make_failure('MISSING_MECHANISM')
-            return reply
+            return self.make_failure('MISSING_MECHANISM')
+
         gene_name = gene_names[0]
 
         result = self.CA.find_mutex(gene_name)
 
         if not result:
-            reply = self.make_failure('MISSING_MECHANISM')
-            return reply
+            return self.make_failure('MISSING_MECHANISM')
 
         reply = KQMLList('SUCCESS')
-        reply.sets('mutex', result)
+
+        reply.sets('mutex', str(result))
 
         return reply
 
@@ -405,6 +357,7 @@ def make_indra_json(causality):
                       'residue': causality['mods%s' % t][0]['residue'],
                       'position': causality['mods%s' % t][0]['position']}
     return indra_json
+
 
 
 if __name__ == "__main__":
