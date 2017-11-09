@@ -302,13 +302,10 @@ class CausalityAgent:
             mutex_list.append(mutex)
 
         return mutex_list
-
-#test
-def print_result(res):
-    print(res)
+#
 # ca = CausalityAgent('./resources')
-
-# ca.populate_tcga_names_table('./resources')
+#
+# ca.db_initializer.populate_tcga_names_table('./resources')
 
 # print(ca.get_tcga_abbr("Ovarian serous cystadenocarcinoma"))
 # res = ca.find_causality({'source': {'id':'MAPK1'}, 'target': {'id': ['JUND', 'ERF']}})

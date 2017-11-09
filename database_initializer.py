@@ -1,6 +1,7 @@
 import os
 import sqlite3
 from bioagents import BioagentException
+import csv
 
 
 
@@ -275,29 +276,28 @@ class DatabaseInitializer:
     def populate_tcga_names_table(self, path):
         """
         Fills the mutation significance table for all genes and TCGA studies
-        :param path: Path to the folder that keeps  tcga_disease_names.txt
+        :param path: Path to the folder that keeps  tcga_disease_names.tsv
         :return:
         """
 
         try:
-            tcga_path = os.path.join(path, 'tcga_disease_names.txt')
+            tcga_path = os.path.join(path, 'tcga_disease_names.tsv')
         except Exception as e:
             raise BioagentException.PathNotFoundException()
 
-        tcga_file = open(tcga_path, 'r')
+        with open(tcga_path, 'rU') as tcga_file:
+            tcga_file = csv.reader(tcga_file, delimiter='\t')
 
-        with self.cadb:
-            cur = self.cadb.cursor()
-            cur.execute("DROP TABLE IF EXISTS TCGA")
-            cur.execute( "CREATE TABLE TCGA(Abbr TEXT, LongName TEXT)")
+            with self.cadb:
+                cur = self.cadb.cursor()
+                cur.execute("DROP TABLE IF EXISTS TCGA")
+                cur.execute("CREATE TABLE TCGA(LongName TEXT, Abbr TEXT)")
 
-            next(tcga_file)  # skip the header line
+                next(tcga_file)  # skip the header line
 
-            for line in tcga_file:
-                vals = line.split('\t')
-                print(vals[0])
-                print(vals[1])
-                cur.execute("INSERT INTO TCGA VALUES(?, ?)",
-                            (vals[0], str(vals[1].rstrip('\n')).lower()))
+                for row in tcga_file:
+                    cur.execute("INSERT INTO TCGA VALUES(?, ?)",
+                                (str(row[0]).lower(), str(row[1].rstrip('\n'))))
 
-        tcga_file.close()
+
+

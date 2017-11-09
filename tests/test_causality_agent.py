@@ -284,7 +284,7 @@ class TestMutSigOV(_IntegrationTest):
     def create_message_failure(self):
         content = KQMLList('FIND-MUTATION-SIGNIFICANCE')
         gene = ekb_kstring_from_text('ACTN4')
-        disease = ekb_from_text('lung cancer')
+        disease = ekb_from_text('abc cancer')
         content.set('gene', gene)
         content.set('disease', disease)
         msg = get_request(content)
