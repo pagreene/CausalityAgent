@@ -16,6 +16,11 @@ class CausalityAgent:
         self.cadb.close()
 
     def get_tcga_abbr(self, long_name):
+        """
+        Gets the study abbreviation given its long name
+        :param long_name:
+        :return:
+        """
         with self.cadb:
             cur = self.cadb.cursor()
 
@@ -26,16 +31,16 @@ class CausalityAgent:
 
             return name[0]
 
-    # Convert the row from sql table into causality object
-    # Positions need to be trimmed to correct PC formatting. E.g. s100S for pSite
+
     @staticmethod
     def row_to_causality(row):
+        """
+          Convertd a row from sql table into causality object
+          Positions need to be trimmed to correct PC formatting. E.g. s100S for pSite
+        """
+
         sites1 = re.findall('([TYS][0-9]+)[TYS]', row[1])
         sites2 = re.findall('([TYS][0-9]+)[TYS]', row[3])
-        res1 = [site[0] for site in sites1]
-        res2 = [site[0] for site in sites2]
-        pos1 = [site[1:] for site in sites1]
-        pos2 = [site[1:] for site in sites2]
         mods1 = [{'mod_type': 'phosphorylation',
                   'residue': site[0],
                   'position': site[1:],
@@ -53,25 +58,34 @@ class CausalityAgent:
                      }
         return causality
 
-    # Convert the row from sql table into correlation object
-    # Positions need to be trimmed to correct PC formatting. E.g. s100S for pSite
+
     @staticmethod
     def row_to_correlation(row):
+        """
+        Converts a row from sql table into correlation object
+        Positions need to be trimmed to correct PC formatting. E.g. s100S for pSite
+        :param row:
+        :return:
+        """
         l1 = len(row[1])
         p_site1 = row[1][1:l1-1]
 
         l2 = len(row[3])
         p_site2 = row[3][1:l2-1]
 
-
         corr = {'id1': row[0], 'pSite1': p_site1,
                 'id2': row[2], 'pSite2': p_site2, 'correlation': row[4],
                 'pVal': row[5],
-                'explainable': "\"unassigned\""}
+                'explainable': "unassigned"}
         return corr
 
-    # Find the causal relationship between gene1 and gene2
     def find_causality(self, param):
+        """
+        Finds the causal relationship between gene1 and gene2
+        :param param: {source:{id: }, target:{id:}}
+        :return:
+        """
+
         with self.cadb:
             cur = self.cadb.cursor()
             sources = param.get('source').get('id')
@@ -98,8 +112,13 @@ class CausalityAgent:
             else:
                 return ''
 
-    # Find the causal relationship from param.source to target
+
     def find_causality_targets(self, param):
+        """
+        Finds the causal relationship from gene list
+        :param param: param: {id:[]}
+        :return:
+        """
         with self.cadb:
             cur = self.cadb.cursor()
             genes = param.get('id')
@@ -125,8 +144,12 @@ class CausalityAgent:
 
             return targets
 
-    # This returns the next interesting relationship be it explained or unexplained
     def find_next_correlation(self, gene):
+        """
+        Returns the next interesting relationship about gene. Can be explained or unexplained
+        :param gene:
+        :return:
+        """
 
         with self.cadb:
             cur = self.cadb.cursor()
@@ -141,7 +164,7 @@ class CausalityAgent:
                 self.causality_ind = self.causality_ind + 1
 
                 corr = self.get_correlation_between(row[0], row[1], row[2], row[3])
-                corr['explainable'] = "\"explainable\""
+                corr['explainable'] = "explainable"
             else:
                 corr = self.find_next_unexplained_correlation(gene)
 
@@ -156,8 +179,15 @@ class CausalityAgent:
 
             return corr
 
-    # We are sure that there is a correlation between these
     def get_correlation_between(self, gene1, p_site1, gene2, p_site2):
+        """
+        When We are sure that there is a correlation between these
+        :param gene1:
+        :param p_site1:
+        :param gene2:
+        :param p_site2:
+        :return:
+        """
         with self.cadb:
             cur = self.cadb.cursor()
             # Don't change the order
@@ -172,8 +202,12 @@ class CausalityAgent:
 
             return corr
 
-    # Find the next highest unexplained correlation
     def find_next_unexplained_correlation(self, gene):
+        """
+        Finds the next highest unexplained correlation
+        :param gene:
+        :return:
+        """
         with self.cadb:
             cur = self.cadb.cursor()
             rows = cur.execute("SELECT * FROM Unexplained_Correlations "
@@ -185,7 +219,7 @@ class CausalityAgent:
                 row = rows[self.corr_ind]
                 self.corr_ind = self.corr_ind + 1
                 corr = self.row_to_correlation(row)
-                corr['explainable'] = "\"unexplainable\""
+                corr['explainable'] = "unexplainable"
                 return corr
             else:
                 return ''
@@ -208,7 +242,11 @@ class CausalityAgent:
                 return 'not significant'
 
     def find_common_upstreams(self, genes):
-        """ Find common upstreams between a list of genes"""
+        """
+        Find common upstreams between a list of genes
+        :param genes:
+        :return:
+        """
 
         with self.cadb:
             cur = self.cadb.cursor()
@@ -236,22 +274,12 @@ class CausalityAgent:
 
                 upstreams = cur.execute(query, (gene,)).fetchall()
 
-
             #format upstreams
             upstream_list = []
             for genes in upstreams:
                 upstream_list.append(str(genes[0]).encode('utf8'))
 
             return upstream_list
-
-    #debug method
-    def find_all_correlations(self, gene):
-        with self.cadb:
-            cur = self.cadb.cursor()
-            rows = cur.execute("SELECT * FROM Correlations WHERE Id1 = ?  OR Id2 = ?",
-                               (gene, gene)).fetchall()
-            for row in rows:
-                print row[0], row[2]
 
     def find_mutex(self, gene):
         """Find a mutually exclusive group that includes gene
@@ -312,7 +340,6 @@ def print_result(res):
 # ca.find_next_correlation('AKT1',print_result)
 # # ca.find_next_correlation('AKT1',print_result)
 # ca.find_correlation_between('AKT1', 'BRAF')
-# ca.find_all_correlations('AKT1')
 # print(ca.find_mutation_significance('TP53', 'OV'))
 # ca.find_common_upstreams('RAC1', 'RAC2')
 # print(ca.find_common_upstreams(['AKT1', 'BRAF', 'MAPK1']))

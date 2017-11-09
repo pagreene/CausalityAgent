@@ -34,9 +34,9 @@ class CausalityModule(Bioagent):
         target_arg = content.gets('TARGET')
 
         if not source_arg:
-            raise ValueError("Source is empty")
+            return self.make_failure('MISSING_MECHANISM')
         if not target_arg:
-            raise ValueError("Target is empty")
+            return self.make_failure('MISSING_MECHANISM')
 
         target_names = _get_term_names(target_arg)
         source_names = _get_term_names(source_arg)
@@ -82,7 +82,7 @@ class CausalityModule(Bioagent):
         rel = content.gets('TYPE')
 
         if not target_arg:
-            raise ValueError("Target is empty")
+            return self.make_failure('MISSING_MECHANISM')
         
         target_names = _get_term_names(target_arg)
         if not target_names:
@@ -100,11 +100,16 @@ class CausalityModule(Bioagent):
             "modulate": "modulates",
         }
 
-        target = {'id': target_name, 'pSite': ' ', 'rel': rel_map[rel]}
+        try:
+            rel_verb = rel_map[rel]
+        except:
+            return self.make_failure('NO_PATH_FOUND')
+
+        target = {'id': target_name, 'pSite': ' ', 'rel': rel_verb}
         result = self.CA.find_causality_targets(target)
 
         if not result:
-            return self.make_failure('MISSING_MECHANISM')
+            return self.make_failure('NO_PATH_FOUND')
 
         # Send PC links to provenance tab
         # Multiple interactions are sent separately
@@ -124,7 +129,7 @@ class CausalityModule(Bioagent):
         rel = content.gets('TYPE')
 
         if not source_arg:
-            raise ValueError("Source is empty")
+            return self.make_failure('MISSING_MECHANISM')
 
         source_names = _get_term_names(source_arg)
         if not source_names:
@@ -141,12 +146,17 @@ class CausalityModule(Bioagent):
             "modulate": "modulates",
         }
 
-        source = {'id': source_name, 'pSite': ' ','rel': rel_map[rel]}
+        try:
+            rel_verb = rel_map[rel]
+        except:
+            return self.make_failure('NO_PATH_FOUND')
+
+        source = {'id': source_name, 'pSite': ' ','rel': rel_verb}
 
         result = self.CA.find_causality_targets(source)
 
         if not result:
-            return self.make_failure('MISSING_MECHANISM')
+            return self.make_failure('NO_PATH_FOUND')
 
         # Multiple interactions are sent separately
         for r in result:
@@ -162,7 +172,7 @@ class CausalityModule(Bioagent):
     def respond_dataset_correlated_entity(self, content):
         source_arg = content.gets('SOURCE')
         if not source_arg:
-            raise ValueError("Source is empty")
+            return self.make_failure('MISSING_MECHANISM')
 
         source_names = _get_term_names(source_arg)
         if not source_names:
@@ -170,6 +180,9 @@ class CausalityModule(Bioagent):
 
         source_name = source_names[0]
         res = self.CA.find_next_correlation(source_name)
+        if res == '':
+            return self.make_failure('NO_PATH_FOUND')
+
         reply = KQMLList('SUCCESS')
         reply.sets('target', res['id2'])
         reply.sets('correlation', str(res['correlation']))
@@ -184,7 +197,7 @@ class CausalityModule(Bioagent):
         genes_arg = content.gets('GENES')
 
         if not genes_arg:
-            raise ValueError("Gene list is empty")
+            return self.make_failure('MISSING_MECHANISM')
 
         gene_names = _get_term_names(genes_arg)
 
@@ -247,7 +260,7 @@ class CausalityModule(Bioagent):
         gene_arg = content.gets('GENE')
 
         if not gene_arg:
-            raise ValueError("Source is empty")
+            return self.make_failure('MISSING_MECHANISM')
 
         gene_names = _get_term_names(gene_arg)
         if not gene_names:
