@@ -127,14 +127,14 @@ class TestNextCorrelation(_IntegrationTest):
     def __init__(self, *args):
         super(TestNextCorrelation, self).__init__(CausalityModule)
 
-    def create_message_explainable(self):
+    def create_message_01_explainable(self):
         source = ekb_kstring_from_text('AKT1')
         content = KQMLList('DATASET-CORRELATED-ENTITY')
         content.set('source', source)
         msg = get_request(content)
         return msg, content
 
-    def check_response_to_message_explainable(self, output):
+    def check_response_to_message__01_explainable(self, output):
         assert output.head() == 'SUCCESS', output
         target = output.gets('target')
         correlation = output.gets('correlation')
@@ -145,7 +145,7 @@ class TestNextCorrelation(_IntegrationTest):
         assert explainable == 'explainable'
 
 
-    def create_message_explainable2(self):
+    def create_message__02_explainable2(self):
         time.sleep(2)
         source = ekb_kstring_from_text('AKT1')
         content = KQMLList('DATASET-CORRELATED-ENTITY')
@@ -153,7 +153,7 @@ class TestNextCorrelation(_IntegrationTest):
         msg = get_request(content)
         return msg, content
 
-    def check_response_to_message_explainable2(self, output):
+    def check_response_to_message__02_explainable2(self, output):
         assert output.head() == 'SUCCESS', output
         target = output.gets('target')
         correlation = output.gets('correlation')
@@ -164,7 +164,7 @@ class TestNextCorrelation(_IntegrationTest):
         assert explainable == 'explainable'
 
 
-    def create_message_unexplainable(self):
+    def create_message__03_unexplainable(self):
         time.sleep(2)
         source = ekb_kstring_from_text('AKT1')
         content = KQMLList('DATASET-CORRELATED-ENTITY')
@@ -172,7 +172,7 @@ class TestNextCorrelation(_IntegrationTest):
         msg = get_request(content)
         return msg, content
 
-    def check_response_to_message_unexplainable(self, output):
+    def check_response_to_message__03_unexplainable(self, output):
         assert output.head() == 'SUCCESS', output
         target = output.gets('target')
         correlation = output.gets('correlation')
@@ -182,32 +182,32 @@ class TestNextCorrelation(_IntegrationTest):
         assert explainable == 'unexplainable'
         time.sleep(1)
 
-    # def create_message_reset(self):
-    #     time.sleep(2)
-    #     content = KQMLList('RESET-CAUSALITY-INDICES')
-    #     msg = get_request(content)
-    #     return msg, content
-    #
-    # def check_response_to_message_reset(self, output):
-    #     assert output.head() == 'SUCCESS', output
+    def create_message__04_reset(self):
+        time.sleep(2)
+        content = KQMLList('RESET-CAUSALITY-INDICES')
+        msg = get_request(content)
+        return msg, content
+
+    def check_response_to_message__04_reset(self, output):
+        assert output.head() == 'SUCCESS', output
 
 
-    # def create_message_explainable_again(self):
-    #     time.sleep(2)
-    #     source = ekb_kstring_from_text('AKT1')
-    #     content = KQMLList('DATASET-CORRELATED-ENTITY')
-    #     content.set('source', source)
-    #     msg = get_request(content)
-    #     return msg, content
-    #
-    # def check_response_to_message_explainable_again(self, output):
-    #     assert output.head() == 'SUCCESS', output
-    #     target = output.gets('target')
-    #     correlation = output.gets('correlation')
-    #     explainable = output.gets('explainable')
-    #     assert target == 'BRAF'
-    #     assert correlation == str(0.7610843243760473)
-    #     assert explainable == 'explainable'
+    def create_message__05_explainable_again(self):
+        time.sleep(2)
+        source = ekb_kstring_from_text('AKT1')
+        content = KQMLList('DATASET-CORRELATED-ENTITY')
+        content.set('source', source)
+        msg = get_request(content)
+        return msg, content
+
+    def check_response_to_message__05_explainable_again(self, output):
+        assert output.head() == 'SUCCESS', output
+        target = output.gets('target')
+        correlation = output.gets('correlation')
+        explainable = output.gets('explainable')
+        assert target == 'BRAF'
+        assert correlation == str(0.7610843243760473)
+        assert explainable == 'explainable'
 
     def create_message_failure(self):
         time.sleep(2)
