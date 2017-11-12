@@ -15,6 +15,10 @@ class CausalityAgent:
     def __del__(self):
         self.cadb.close()
 
+    def reset_indices(self):
+        self.corr_ind = 0
+        self.causality_ind = 0
+
     def get_tcga_abbr(self, long_name):
         """
         Gets the study abbreviation given its long name

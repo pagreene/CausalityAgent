@@ -1,11 +1,12 @@
 import json
-from kqml import KQMLList, KQMLString
+from kqml import KQMLList, KQMLString, KQMLPerformative
 from indra.statements import stmts_from_json
 from causality_sbgnviz_interface import _resource_dir
 import causality_agent
 from causality_module import CausalityModule
 from tests.integration import _IntegrationTest
 from tests.util import ekb_kstring_from_text, ekb_from_text, get_request
+import time
 
 ca = causality_agent.CausalityAgent(_resource_dir)
 
@@ -143,7 +144,9 @@ class TestNextCorrelation(_IntegrationTest):
         assert correlation == str(0.7610843243760473)
         assert explainable == 'explainable'
 
+
     def create_message_explainable2(self):
+        time.sleep(2)
         source = ekb_kstring_from_text('AKT1')
         content = KQMLList('DATASET-CORRELATED-ENTITY')
         content.set('source', source)
@@ -160,7 +163,9 @@ class TestNextCorrelation(_IntegrationTest):
         assert correlation == str(0.581061418186)
         assert explainable == 'explainable'
 
+
     def create_message_unexplainable(self):
+        time.sleep(2)
         source = ekb_kstring_from_text('AKT1')
         content = KQMLList('DATASET-CORRELATED-ENTITY')
         content.set('source', source)
@@ -172,12 +177,40 @@ class TestNextCorrelation(_IntegrationTest):
         target = output.gets('target')
         correlation = output.gets('correlation')
         explainable = output.gets('explainable')
-
         assert target == 'AGPS'
         assert correlation == str(0.94999636806)
         assert explainable == 'unexplainable'
+        time.sleep(1)
+
+    # def create_message_reset(self):
+    #     time.sleep(2)
+    #     content = KQMLList('RESET-CAUSALITY-INDICES')
+    #     msg = get_request(content)
+    #     return msg, content
+    #
+    # def check_response_to_message_reset(self, output):
+    #     assert output.head() == 'SUCCESS', output
+
+
+    # def create_message_explainable_again(self):
+    #     time.sleep(2)
+    #     source = ekb_kstring_from_text('AKT1')
+    #     content = KQMLList('DATASET-CORRELATED-ENTITY')
+    #     content.set('source', source)
+    #     msg = get_request(content)
+    #     return msg, content
+    #
+    # def check_response_to_message_explainable_again(self, output):
+    #     assert output.head() == 'SUCCESS', output
+    #     target = output.gets('target')
+    #     correlation = output.gets('correlation')
+    #     explainable = output.gets('explainable')
+    #     assert target == 'BRAF'
+    #     assert correlation == str(0.7610843243760473)
+    #     assert explainable == 'explainable'
 
     def create_message_failure(self):
+        time.sleep(2)
         source = ekb_kstring_from_text('ABC')
         content = KQMLList('DATASET-CORRELATED-ENTITY')
         content.set('source', source)
@@ -188,6 +221,7 @@ class TestNextCorrelation(_IntegrationTest):
         assert output.head() == 'FAILURE', output
         reason = output.gets('reason')
         assert reason == "NO_PATH_FOUND"
+
 
 
 class TestCommonUpstreams(_IntegrationTest):

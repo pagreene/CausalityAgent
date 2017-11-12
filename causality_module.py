@@ -20,12 +20,28 @@ class CausalityModule(Bioagent):
     tasks = ['FIND-CAUSAL-PATH', 'FIND-CAUSALITY-TARGET',
              'FIND-CAUSALITY-SOURCE',
              'DATASET-CORRELATED-ENTITY', 'FIND-COMMON-UPSTREAMS',
-             'RESTART-CAUSALITY-INDICES', 'FIND-MUTEX', 'FIND-MUTATION-SIGNIFICANCE']
+             'RESTART-CAUSALITY-INDICES', 'FIND-MUTEX', 'FIND-MUTATION-SIGNIFICANCE', 'CLEAN-MODEL',
+             'RESET-CAUSALITY-INDICES']
 
     def __init__(self, **kwargs):
         self.CA = CausalityAgent(_resource_dir)
         # Call the constructor of KQMLModule
         super(CausalityModule, self).__init__(**kwargs)
+
+    def respond_reset_causality_indices(self, content):
+        self.CA.reset_indices()
+        reply = KQMLList('SUCCESS')
+        return reply
+
+    def respond_clean_model(self, content):
+        """
+        When a clean model command comes from sbgnviz interface agent, causalA is reset
+        :param content:
+        :return:
+        """
+        self.init()
+        reply = KQMLList('SUCCESS')
+        return reply
 
     def respond_find_causal_path(self, content):
         """Response content to find-causal-path request"""
@@ -375,4 +391,3 @@ def make_indra_json(causality):
 
 if __name__ == "__main__":
     CausalityModule(argv=sys.argv[1:])
-

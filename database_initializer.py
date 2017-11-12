@@ -3,8 +3,6 @@ import sqlite3
 from bioagents import BioagentException
 import csv
 
-
-
 class DatabaseInitializer:
     """ Fills the pnnl database from the given data files"""
 
