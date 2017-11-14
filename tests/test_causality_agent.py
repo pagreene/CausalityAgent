@@ -267,7 +267,10 @@ class TestMutex(_IntegrationTest):
     def check_response_to_message(self, output):
         assert output.head() == 'SUCCESS', output
         mutex = output.gets('mutex')
-        assert mutex == "[{'score': '0.0', 'group': ['CDH1', 'TP53']}, {'score': '0.0', 'group': ['TP53', 'CDH1']}, {'score': '0.0', 'group': ['GATA3', 'TP53']}, {'score': '0.05', 'group': ['FOXA1', 'TP53', 'GATA3']}]"
+        assert mutex == "[{'score': '0.0', 'group': ['CDH1', 'TP53']}, " \
+                        "{'score': '0.0', 'group': ['TP53', 'CDH1']}, " \
+                        "{'score': '0.0', 'group': ['GATA3', 'TP53']}, " \
+                        "{'score': '0.05', 'group': ['FOXA1', 'TP53', 'GATA3']}]"
 
     def create_message_failure(self):
         content = KQMLList('FIND-MUTEX')

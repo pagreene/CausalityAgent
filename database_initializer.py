@@ -3,6 +3,7 @@ import sqlite3
 from bioagents import BioagentException
 import csv
 
+
 class DatabaseInitializer:
     """ Fills the pnnl database from the given data files"""
 
@@ -100,7 +101,7 @@ class DatabaseInitializer:
     def populate_correlation_table(self, path):
         """
         Fills the correlation table
-        :param path::param path: Path to the folder that keeps PNNL-ovarian-correlations.txt
+        :param::path: Path to the folder that keeps PNNL-ovarian-correlations.txt
         :return:
         """
 
@@ -144,7 +145,6 @@ class DatabaseInitializer:
 
     def populate_mutsig_table(self, path):
         """
-
         :param path: Path to the folder that keeps TCGA folder and mutsig.txt files
         :return:
         """
@@ -167,6 +167,7 @@ class DatabaseInitializer:
                     file_path = os.path.join(disease_path, 'scores-mutsig.txt')
                 except Exception as e:
                     raise BioagentException.PathNotFoundException()
+
                 mutsig_file = open(file_path, 'r')
                 next(mutsig_file) # skip the header line
 
@@ -178,8 +179,6 @@ class DatabaseInitializer:
                     cur.execute("INSERT INTO MutSig VALUES(?, ?, ?, ?)", (gene_id, folder,  p_val, q_val))
 
                 mutsig_file.close()
-
-
 
     def populate_explained_table(self):
         """

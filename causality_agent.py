@@ -1,7 +1,6 @@
 import re
-import os
-import sqlite3
 from database_initializer import DatabaseInitializer
+
 
 class CausalityAgent:
     def __init__(self, path):
@@ -115,7 +114,6 @@ class CausalityAgent:
                 return causality
             else:
                 return ''
-
 
     def find_causality_targets(self, param):
         """
