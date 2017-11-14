@@ -119,13 +119,13 @@ class CausalityModule(Bioagent):
         try:
             rel_verb = rel_map[rel]
         except:
-            return self.make_failure('NO_PATH_FOUND')
+            return self.make_failure('MISSING_MECHANISM')
 
         target = {'id': target_name, 'pSite': ' ', 'rel': rel_verb}
         result = self.CA.find_causality_targets(target)
 
         if not result:
-            return self.make_failure('NO_PATH_FOUND')
+            return self.make_failure('MISSING_MECHANISM')
 
         # Send PC links to provenance tab
         # Multiple interactions are sent separately
@@ -165,14 +165,14 @@ class CausalityModule(Bioagent):
         try:
             rel_verb = rel_map[rel]
         except:
-            return self.make_failure('NO_PATH_FOUND')
+            return self.make_failure('MISSING_MECHANISM')
 
         source = {'id': source_name, 'pSite': ' ','rel': rel_verb}
 
         result = self.CA.find_causality_targets(source)
 
         if not result:
-            return self.make_failure('NO_PATH_FOUND')
+            return self.make_failure('MISSING_MECHANISM')
 
         # Multiple interactions are sent separately
         for r in result:

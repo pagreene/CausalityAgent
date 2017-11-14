@@ -83,7 +83,7 @@ class TestCausalityTarget(_IntegrationTest):
     def check_response_to_message_failure(self, output):
         assert output.head() == 'FAILURE', output
         reason = output.gets('reason')
-        assert reason == "NO_PATH_FOUND"
+        assert reason == "MISSING_MECHANISM"
 
 
 class TestCausalitySource(_IntegrationTest):
@@ -120,7 +120,7 @@ class TestCausalitySource(_IntegrationTest):
     def check_response_to_message_failure(self, output):
         assert output.head() == 'FAILURE', output
         reason = output.gets('reason')
-        assert reason == "NO_PATH_FOUND"
+        assert reason == "MISSING_MECHANISM"
 
 
 class TestNextCorrelation(_IntegrationTest):
