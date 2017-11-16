@@ -3,7 +3,9 @@ import sqlite3
 from bioagents import BioagentException
 import csv
 
-
+tcga_study_names = ['ACC', 'BLCA', 'BRCA', 'CESC','CHOL', 'COAD', 'COADREAD', 'DLBC', 'GBM', 'GBMLGG', 'HNSC',
+                    'KICH', 'KIPAN','KIRC', 'KIRP', 'LAML', 'LGG', 'LIHC', 'LUAD', 'LUSC', 'OV', 'PAAD', 'PCPG',
+                    'PRAD', 'READ', 'SARC', 'SKCM', 'STAD', 'STES', 'TGCT', 'THCA', 'UCEC', 'UCS', 'UVM']
 class DatabaseInitializer:
     """ Fills the pnnl database from the given data files"""
 
@@ -163,8 +165,11 @@ class DatabaseInitializer:
 
             for folder in folders:
                 try:
-                    disease_path = os.path.join(mutsig_path, folder)
-                    file_path = os.path.join(disease_path, 'scores-mutsig.txt')
+                    if folder in tcga_study_names:
+                        disease_path = os.path.join(mutsig_path, folder)
+                        file_path = os.path.join(disease_path, 'scores-mutsig.txt')
+                    else:
+                        continue
                 except Exception as e:
                     raise BioagentException.PathNotFoundException()
 
@@ -180,6 +185,57 @@ class DatabaseInitializer:
 
                 mutsig_file.close()
 
+    def populate_mutex_table(self, path):
+        """
+        Finds mutually exclusive gene groups
+        :param path: Path to the folder that keeps ranked-groups.txt
+        :return:
+        """
+
+        try:
+            mutex_path = os.path.join(path, 'tcga-mutex-results')
+        except Exception as e:
+            raise BioagentException.PathNotFoundException()
+
+
+        folders = os.listdir(mutex_path)
+        with self.cadb:
+            cur = self.cadb.cursor()
+            cur.execute("DROP TABLE IF EXISTS Mutex")
+            cur.execute("CREATE TABLE Mutex(Disease TEXT, Id1 TEXT, Id2 TEXT, Id3 TEXT, Id4, Id5, Score REAL)")
+            for folder in folders:
+                try:
+                    if folder in tcga_study_names:
+                        disease_path = os.path.join(mutex_path, folder)
+                        file_path = os.path.join(disease_path, 'whole/no-network/ranked-groups.txt')
+                    else:
+                        continue
+                except Exception as e:
+                    raise BioagentException.PathNotFoundException()
+
+                mutex_file = open(file_path, 'r')
+                next(mutex_file)  # skip the header line
+                for line in mutex_file:
+                    vals = line.split('\t')
+                    vals[len(vals) - 1] = vals[len(vals) - 1].rstrip('\n')
+                    score = float(vals[0])
+                    if score > 0.05:
+                        continue
+
+                    genes = []
+                    for i in range(2, len(vals)):
+                        genes.append(vals[i])
+                        # print(genes[i-2])
+
+                    # fill the rest with none
+                    for i in range(len(vals), 7):
+                        genes.append(None)
+
+
+                    cur.execute("INSERT INTO Mutex VALUES(?, ?, ?, ?, ?,?, ?)",
+                                (folder, genes[0], genes[1], genes[2], genes[3], genes[4], score))
+
+        mutex_file.close()
     def populate_explained_table(self):
         """
         Find the correlations with a causal explanation
@@ -236,39 +292,7 @@ class DatabaseInitializer:
 
         pc_file.close()
 
-    def populate_mutex_table(self, path):
-        """
-        Finds mutually exclusive gene groups
-        :param path: Path to the folder that keeps ranked-groups.txt
-        :return:
-        """
 
-        try:
-            mutex_path = os.path.join(path, 'ranked-groups.txt')
-        except Exception as e:
-            raise BioagentException.PathNotFoundException()
-
-        mutex_file = open(mutex_path, 'r')
-
-        with self.cadb:
-            cur = self.cadb.cursor()
-            cur.execute("DROP TABLE IF EXISTS Mutex")
-            cur.execute("CREATE TABLE Mutex(Id1 TEXT, Id2 TEXT, Id3 TEXT, Score REAL)")
-
-            for line in mutex_file:
-                vals = line.split('\t')
-                vals[len(vals) - 1] = vals[len(vals) - 1].rstrip('\n')
-                score = vals[0]
-                gene1 = vals[2]
-                gene2 = vals[3]
-                if len(vals) > 4:
-                    gene3 = vals[4]
-                else:
-                    gene3 = None
-
-                cur.execute("INSERT INTO Mutex VALUES(?, ?, ?, ?)", (gene1, gene2, gene3, score))
-
-        mutex_file.close()
 
     def populate_tcga_names_table(self, path):
         """
@@ -295,6 +319,5 @@ class DatabaseInitializer:
                 for row in tcga_file:
                     cur.execute("INSERT INTO TCGA VALUES(?, ?)",
                                 (str(row[0]).lower(), str(row[1].rstrip('\n'))))
-
 
 

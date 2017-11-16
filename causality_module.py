@@ -284,7 +284,21 @@ class CausalityModule(Bioagent):
 
         gene_name = gene_names[0]
 
-        result = self.CA.find_mutex(gene_name)
+        disease_arg = content.gets('DISEASE')
+        if not disease_arg:
+            return self.make_failure('MISSING_MECHANISM')
+
+
+        disease_names = _get_term_names(disease_arg)
+        if not disease_names:
+            return self.make_failure('INVALID_DISEASE')
+
+        disease_name = disease_names[0].replace("-", " ").lower()
+        disease_abbr = self.CA.get_tcga_abbr(disease_name)
+        if disease_abbr is None:
+            return self.make_failure('INVALID_DISEASE')
+
+        result = self.CA.find_mutex(gene_name, disease_abbr)
 
         if not result:
             return self.make_failure('MISSING_MECHANISM')

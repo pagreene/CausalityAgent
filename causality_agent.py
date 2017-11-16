@@ -228,7 +228,7 @@ class CausalityAgent:
 
     def find_mutation_significance(self, gene, disease):
         """
-        :param gene: single gene name
+        :param single gene name and a tcga study abbreviation
         :return: string, mutation significance
         """
         with self.cadb:
@@ -242,6 +242,29 @@ class CausalityAgent:
                 return 'significant'
             else:
                 return 'not significant'
+
+    def find_mutex(self, gene, disease):
+        """Find a mutually exclusive group that includes gene
+        :param single gene name and a tcga study abbreviation
+        :return object list
+        """
+
+        with self.cadb:
+            cur = self.cadb.cursor()
+            groups = cur.execute("SELECT * FROM Mutex WHERE Disease = ? AND "
+                                 "(Id1 = ? OR Id2 = ? OR Id3 = ? OR Id4 = ? OR Id5 = ?) ",
+                                 (disease, gene, gene, gene, gene, gene)).fetchall()
+
+        # format groups
+        mutex_list = []
+        for group in groups:
+            mutex = {'group': [], 'score': str(round(group[len(group) - 1], 2))}
+            for i in range(1, len(group) - 1):
+                if group[i] is not None:
+                    mutex['group'].append(group[i].encode('utf8'))
+            mutex_list.append(mutex)
+
+        return mutex_list
 
     def find_common_upstreams(self, genes):
         """
@@ -283,29 +306,13 @@ class CausalityAgent:
 
             return upstream_list
 
-    def find_mutex(self, gene):
-        """Find a mutually exclusive group that includes gene
-        ;:param single gene name
-        :return object list
-        """
 
-        with self.cadb:
-            cur = self.cadb.cursor()
-            groups = cur.execute("SELECT * FROM Mutex WHERE Id1 = ? OR Id2 = ? OR Id3 = ?",
-                                 (gene, gene, gene)).fetchall()
-
-        # format groups
-        mutex_list = []
-        for group in groups:
-            mutex = {'group': [], 'score': str(round(group[len(group) - 1], 2))}
-            for i in range(len(group) - 1):
-                if group[i] is not None:
-                    mutex['group'].append(group[i].encode('utf8'))
-            mutex_list.append(mutex)
-
-        return mutex_list
-#
 # ca = CausalityAgent('./resources')
+#
+# print(ca.find_mutex('TP53', 'BRCA'))
+# ca.db_initializer.populate_tables('./resources')
+# ca.db_initializer.populate_mutex_table('./resources')
+
 #
 # ca.db_initializer.populate_tcga_names_table('./resources')
 

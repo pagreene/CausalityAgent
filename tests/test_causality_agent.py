@@ -260,17 +260,19 @@ class TestMutex(_IntegrationTest):
     def create_message(self):
         content = KQMLList('FIND-MUTEX')
         gene = ekb_from_text('TP53')
+        disease = ekb_from_text('breast cancer')
         content.set('gene', gene)
+        content.set('disease', disease)
         msg = get_request(content)
         return msg, content
 
     def check_response_to_message(self, output):
         assert output.head() == 'SUCCESS', output
         mutex = output.gets('mutex')
-        assert mutex == "[{'score': '0.0', 'group': ['CDH1', 'TP53']}, " \
-                        "{'score': '0.0', 'group': ['TP53', 'CDH1']}, " \
-                        "{'score': '0.0', 'group': ['GATA3', 'TP53']}, " \
-                        "{'score': '0.05', 'group': ['FOXA1', 'TP53', 'GATA3']}]"
+        assert mutex == "[{'score': '0.0', 'group': ['TP53', 'CDH1']}, " \
+                        "{'score': '0.0', 'group': ['CDH1', 'TP53']}," \
+                        " {'score': '0.0', 'group': ['GATA3', 'TP53', 'CDH1']}, " \
+                        "{'score': '0.0', 'group': ['CTCF', 'TP53', 'CDH1', 'GATA3']}]"
 
     def create_message_failure(self):
         content = KQMLList('FIND-MUTEX')
