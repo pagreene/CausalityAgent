@@ -237,7 +237,7 @@ class TestCommonUpstreams(_IntegrationTest):
 
     def check_response_to_message(self, output):
         assert output.head() == 'SUCCESS', output
-        upstreams = output.gets('upstreams')
+        upstreams = output.get('upstreams')
         assert 'EGF' in upstreams
 
     def create_message_failure(self):

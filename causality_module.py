@@ -230,7 +230,14 @@ class CausalityModule(Bioagent):
             return self.make_failure('MISSING_MECHANISM')
 
         reply = KQMLList('SUCCESS')
-        reply.sets('upstreams', str(result))
+
+        upstreams = KQMLList()
+        for r in result:
+            upstreams.append(r)
+        reply.set('upstreams', upstreams)
+
+
+        # reply.sets('upstreams', str(result))
 
 
         return reply
