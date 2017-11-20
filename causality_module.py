@@ -40,8 +40,8 @@ class CausalityModule(Bioagent):
         :return:
         """
         self.CA.reset_indices()
-        reply = KQMLList('SUCCESS')
-        return reply
+        # reply = KQMLList('SUCCESS')
+        # return reply
 
     def respond_find_causal_path(self, content):
         """Response content to find-causal-path request"""
@@ -313,9 +313,15 @@ class CausalityModule(Bioagent):
         # Reorganize result
         for r in result:
             groups = KQMLList()
+            groups.set('score', r['score'])
+
+            genes = KQMLList()
             for gene in r['group']:
-                groups.append(gene)
+                genes.append(gene)
+
+            groups.set('group', genes)
             mutex.append(groups)
+            # mutex.append(groups)
 
         reply.set('mutex', mutex)
 
