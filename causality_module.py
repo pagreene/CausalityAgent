@@ -20,7 +20,7 @@ class CausalityModule(Bioagent):
     tasks = ['FIND-CAUSAL-PATH', 'FIND-CAUSALITY-TARGET',
              'FIND-CAUSALITY-SOURCE',
              'DATASET-CORRELATED-ENTITY', 'FIND-COMMON-UPSTREAMS',
-             'RESTART-CAUSALITY-INDICES', 'FIND-MUTEX', 'FIND-MUTATION-SIGNIFICANCE', 'CLEAN-MODEL',
+             'RESTART-CAUSALITY-INDICES', 'FIND-MUTEX', 'FIND-MUTATION-SIGNIFICANCE',
              'RESET-CAUSALITY-INDICES']
 
     def __init__(self, **kwargs):
@@ -32,16 +32,6 @@ class CausalityModule(Bioagent):
         self.CA.reset_indices()
         reply = KQMLList('SUCCESS')
         return reply
-
-    def respond_clean_model(self, content):
-        """
-        When a clean model command comes from sbgnviz interface agent, causalA is reset
-        :param content:
-        :return:
-        """
-        self.CA.reset_indices()
-        # reply = KQMLList('SUCCESS')
-        # return reply
 
     def respond_find_causal_path(self, content):
         """Response content to find-causal-path request"""
