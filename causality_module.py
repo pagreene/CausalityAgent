@@ -39,7 +39,7 @@ class CausalityModule(Bioagent):
         :param content:
         :return:
         """
-        self.init()
+        self.CA.reset_indices()
         reply = KQMLList('SUCCESS')
         return reply
 
@@ -236,10 +236,6 @@ class CausalityModule(Bioagent):
             upstreams.append(r)
         reply.set('upstreams', upstreams)
 
-
-        # reply.sets('upstreams', str(result))
-
-
         return reply
 
     def respond_find_mutation_significance(self, content):
@@ -312,7 +308,16 @@ class CausalityModule(Bioagent):
 
         reply = KQMLList('SUCCESS')
 
-        reply.sets('mutex', str(result))
+        mutex = KQMLList()
+
+        # Reorganize result
+        for r in result:
+            groups = KQMLList()
+            for gene in r['group']:
+                groups.append(gene)
+            mutex.append(groups)
+
+        reply.set('mutex', mutex)
 
         return reply
 
