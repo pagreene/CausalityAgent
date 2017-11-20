@@ -108,10 +108,6 @@ class CausalityAgent:
 
             rows = cur.execute(query).fetchall()
 
-
-            if not rows:
-                return None
-
             if len(rows) > 0:
                 row = rows[0]
                 causality = self.row_to_causality(row)
@@ -168,8 +164,7 @@ class CausalityAgent:
                                       "ORDER BY ABS(Corr) DESC",
                                       (gene, gene)).fetchall()
 
-            if not causal_rows:
-                return None
+
             row_cnt = len(causal_rows)
             if row_cnt > self.causality_ind:
                 row = causal_rows[self.causality_ind]
@@ -228,8 +223,6 @@ class CausalityAgent:
                                "WHERE Id1 = ? OR Id2 = ? ORDER BY ABS(Corr) DESC",
                                (gene, gene)).fetchall()
 
-            if not rows:
-                return None
 
             row_cnt = len(rows)
             if row_cnt > self.corr_ind:

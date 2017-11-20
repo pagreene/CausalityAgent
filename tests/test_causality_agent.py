@@ -49,6 +49,19 @@ class TestCausalPath(_IntegrationTest):
         reason = output.gets('reason')
         assert reason == 'NO_PATH_FOUND'
 
+    def create_message_failure_2(self):
+        source = ekb_kstring_from_text('ABC')
+        target = ekb_kstring_from_text('TP53')
+        content = KQMLList('FIND-CAUSAL-PATH')
+        content.set('source', source)
+        content.set('target', target)
+        msg = get_request(content)
+        return msg, content
+
+    def check_response_to_message_failure_2(self, output):
+        assert output.head() == 'FAILURE'
+        reason = output.gets('reason')
+        assert reason == 'NO_PATH_FOUND'
 
 class TestCausalityTarget(_IntegrationTest):
     def __init__(self, *args):
@@ -81,6 +94,19 @@ class TestCausalityTarget(_IntegrationTest):
         return msg, content
 
     def check_response_to_message_failure(self, output):
+        assert output.head() == 'FAILURE', output
+        reason = output.gets('reason')
+        assert reason == "MISSING_MECHANISM"
+
+    def create_message_failure_2(self):
+        target = ekb_kstring_from_text('ABC')
+        content = KQMLList('FIND-CAUSALITY-TARGET')
+        content.set('target', target)
+        content.sets('type', 'phosphorylates')
+        msg = get_request(content)
+        return msg, content
+
+    def check_response_to_message_failure_2(self, output):
         assert output.head() == 'FAILURE', output
         reason = output.gets('reason')
         assert reason == "MISSING_MECHANISM"
@@ -118,6 +144,19 @@ class TestCausalitySource(_IntegrationTest):
         return msg, content
 
     def check_response_to_message_failure(self, output):
+        assert output.head() == 'FAILURE', output
+        reason = output.gets('reason')
+        assert reason == "MISSING_MECHANISM"
+
+    def create_message_failure_2(self):
+        target = ekb_kstring_from_text('ABC')
+        content = KQMLList('FIND-CAUSALITY-SOURCE')
+        content.set('target', target)
+        content.sets('type', 'phosphorylates')
+        msg = get_request(content)
+        return msg, content
+
+    def check_response_to_message_failure_2(self, output):
         assert output.head() == 'FAILURE', output
         reason = output.gets('reason')
         assert reason == "MISSING_MECHANISM"
