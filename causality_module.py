@@ -256,7 +256,7 @@ class CausalityModule(Bioagent):
         result = self.CA.find_mutation_significance(gene_name, disease_abbr)
 
         if not result:
-            return self.make_failure('INVALID_DISEASE')
+            return self.make_failure('MISSING_MECHANISM')
 
         reply = KQMLList('SUCCESS')
         reply.sets('mutsig', result)

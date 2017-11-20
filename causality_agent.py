@@ -108,6 +108,10 @@ class CausalityAgent:
 
             rows = cur.execute(query).fetchall()
 
+
+            if not rows:
+                return None
+
             if len(rows) > 0:
                 row = rows[0]
                 causality = self.row_to_causality(row)
@@ -139,6 +143,10 @@ class CausalityAgent:
                 query = "SELECT * FROM Causality WHERE Rel = ?  AND Id1 IN " + "(" + id_str + ")";
                 rows = cur.execute(query, (rel,)).fetchall()
 
+
+            if not rows:
+                return None
+
             targets = []
             for row in rows:
                 causality = self.row_to_causality(row)
@@ -160,6 +168,8 @@ class CausalityAgent:
                                       "ORDER BY ABS(Corr) DESC",
                                       (gene, gene)).fetchall()
 
+            if not causal_rows:
+                return None
             row_cnt = len(causal_rows)
             if row_cnt > self.causality_ind:
                 row = causal_rows[self.causality_ind]
@@ -197,6 +207,8 @@ class CausalityAgent:
                                "OR Id1 = ? AND PSite1 = ?  AND Id2 = ?  AND PSite2 = ? ",
                                (gene1, p_site1, gene2, p_site2, gene2, p_site2, gene1, p_site1)).fetchall()
 
+            if not rows:
+                return None
             corr = ''
             if len(rows) > 0:
                 row = rows[0]
@@ -215,6 +227,9 @@ class CausalityAgent:
             rows = cur.execute("SELECT * FROM Unexplained_Correlations "
                                "WHERE Id1 = ? OR Id2 = ? ORDER BY ABS(Corr) DESC",
                                (gene, gene)).fetchall()
+
+            if not rows:
+                return None
 
             row_cnt = len(rows)
             if row_cnt > self.corr_ind:
@@ -236,6 +251,8 @@ class CausalityAgent:
 
             p_val = cur.execute("SELECT PVal FROM MutSig WHERE Id = ? AND Disease = ?", (gene, disease)).fetchone()
 
+            if not p_val:
+                return None
             if p_val[0] < 0.01:
                 return 'highly significant'
             elif p_val[0] < 0.05:
@@ -255,6 +272,8 @@ class CausalityAgent:
                                  "(Id1 = ? OR Id2 = ? OR Id3 = ? OR Id4 = ? OR Id5 = ?) ",
                                  (disease, gene, gene, gene, gene, gene)).fetchall()
 
+        if not groups:
+            return None
         # format groups
         mutex_list = []
         for group in groups:
@@ -286,6 +305,9 @@ class CausalityAgent:
                                     "INNER JOIN Sif_Relations s2 ON (s2.Id1 = s1.Id1 AND s1.Id2 = ? AND s2.id2 = ? AND  "
                                     "s1.Rel = 'controls-state-change-of' AND s2.Rel = s1.Rel)",
                                     (gene1, gene2)).fetchall()
+
+            if not upstreams:
+                return None
 
             for i in range(2, len(genes)):
                 gene = genes[i]

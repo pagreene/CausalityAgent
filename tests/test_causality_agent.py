@@ -268,11 +268,16 @@ class TestMutex(_IntegrationTest):
 
     def check_response_to_message(self, output):
         assert output.head() == 'SUCCESS', output
-        mutex = output.gets('mutex')
-        assert mutex == "[{'score': '0.0', 'group': ['TP53', 'CDH1']}, " \
-                        "{'score': '0.0', 'group': ['CDH1', 'TP53']}," \
-                        " {'score': '0.0', 'group': ['GATA3', 'TP53', 'CDH1']}, " \
-                        "{'score': '0.0', 'group': ['CTCF', 'TP53', 'CDH1', 'GATA3']}]"
+        mutex = output.get('mutex')
+
+
+        test_res = KQMLList.from_string('((:score 0.0 :group (TP53 CDH1)) '
+                                        '(:score 0.0 :group (CDH1 TP53)) '
+                                        '(:score 0.0 :group (GATA3 TP53 CDH1)) '
+                                        '(:score 0.0 :group (CTCF TP53 CDH1 GATA3)))')
+
+        # TODO: do this without converting into string
+        assert str(test_res) == str(mutex)
 
     def create_message_failure(self):
         content = KQMLList('FIND-MUTEX')
@@ -334,5 +339,18 @@ class TestMutSigOV(_IntegrationTest):
         reason = output.gets('reason')
         assert reason == "INVALID_DISEASE"
 
+    def create_message_failure_2(self):
+        content = KQMLList('FIND-MUTATION-SIGNIFICANCE')
+        gene = ekb_kstring_from_text('LKT')
+        disease = ekb_from_text('breast cancer')
+        content.set('gene', gene)
+        content.set('disease', disease)
+        msg = get_request(content)
+        return msg, content
+
+    def check_response_to_message_failure_2(self, output):
+        assert output.head() == 'FAILURE', output
+        reason = output.gets('reason')
+        assert reason == "MISSING_MECHANISM"
 
 
