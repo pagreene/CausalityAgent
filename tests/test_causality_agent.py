@@ -331,9 +331,9 @@ class TestMutex(_IntegrationTest):
         assert reason == "MISSING_MECHANISM"
 
 
-class TestMutSigOV(_IntegrationTest):
+class TestMutSig(_IntegrationTest):
     def __init__(self, *args):
-        super(TestMutSigOV, self).__init__(CausalityModule)
+        super(TestMutSig, self).__init__(CausalityModule)
 
     def create_message_OV(self):
         content = KQMLList('FIND-MUTATION-SIGNIFICANCE')
@@ -380,7 +380,7 @@ class TestMutSigOV(_IntegrationTest):
 
     def create_message_failure_2(self):
         content = KQMLList('FIND-MUTATION-SIGNIFICANCE')
-        gene = ekb_kstring_from_text('LKT')
+        gene = ekb_kstring_from_text('ABC')
         disease = ekb_from_text('breast cancer')
         content.set('gene', gene)
         content.set('disease', disease)
