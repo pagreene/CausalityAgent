@@ -344,38 +344,6 @@ def _get_term_names(term_str):
 
     return agent_names
 
-def make_indra_json(causality):
-    """Convert causality response to indra format
-        Causality format is (id1, res1, pos1, id2,res2, pos2, rel)"""
-
-    causality['rel'] = causality['rel'].upper()
-
-    indra_relation_map = {
-        "PHOSPHORYLATES": "Phosphorylation",
-        "IS-PHOSPHORYLATED-BY": "Phosphorylation",
-        "IS-DEPHOSPHORYLATED-BY": "Dephosphorylation",
-        "UPREGULATES-EXPRESSION": "IncreaseAmount",
-        "EXPRESSION-IS-UPREGULATED-BY": "IncreaseAmount",
-        "DOWNREGULATES-EXPRESSION": "DecreaseAmount",
-        "EXPRESSION-IS-DOWNREGULATED-BY": "DecreaseAmount"
-    }
-
-    rel_type = indra_relation_map[causality['rel']]
-
-    s, t = ('2', '1') if 'IS' in causality['rel'] else ('1', '2')
-    subj, obj = ('enz', 'sub') if 'PHOSPHO' in causality['rel'] else \
-                ('subj', 'obj')
-
-    if "PHOSPHO" in causality['rel']:  # phosphorylation
-        indra_json = {'type': rel_type,
-                      subj: {'name': causality['id%s' % s],
-                             'mods': causality['mods%s' % s]},
-                      obj: {'name': causality['id%s' % t]},
-                      'residue': causality['mods%s' % t][0]['residue'],
-                      'position': causality['mods%s' % t][0]['position']}
-    return indra_json
-
-
 
 
 def make_indra_json(causality):
@@ -400,13 +368,15 @@ def make_indra_json(causality):
     subj, obj = ('enz', 'sub') if 'PHOSPHO' in causality['rel'] else \
                 ('subj', 'obj')
 
-    if "PHOSPHO" in causality['rel']:  # phosphorylation
-        indra_json = {'type': rel_type,
-                      subj: {'name': causality['id%s' % s],
-                             'mods': causality['mods%s' % s]},
-                      obj: {'name': causality['id%s' % t]},
-                      'residue': causality['mods%s' % t][0]['residue'],
-                      'position': causality['mods%s' % t][0]['position']}
+
+    # if "PHOSPHO" in causality['rel']:  # phosphorylation
+    indra_json = {'type': rel_type,
+                  subj: {'name': causality['id%s' % s],
+                         'mods': causality['mods%s' % s]},
+                  obj: {'name': causality['id%s' % t]},
+                  'residue': causality['mods%s' % t][0]['residue'],
+                  'position': causality['mods%s' % t][0]['position']}
+
     return indra_json
 
 

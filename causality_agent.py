@@ -49,11 +49,24 @@ class CausalityAgent:
                   'position': site[1:],
                   'is_modified': True}
                   for site in sites1]
+        if not sites1:
+            mods1 = [{'mod_type': 'phosphorylation',
+                  'residue': None,
+                  'position': None,
+                  'is_modified': True}]
+
         mods2 = [{'mod_type': 'phosphorylation',
                   'residue': site[0],
                   'position': site[1:],
                   'is_modified': True}
                   for site in sites2]
+
+        if not sites2:
+            mods2 = [{'mod_type': 'phosphorylation',
+                      'residue': None,
+                      'position': None,
+                      'is_modified': True}]
+
         causality = {'id1': row[0], 'mods1': mods1,
                      'id2': row[2], 'mods2': mods2,
                      'rel': row[4],
@@ -323,7 +336,8 @@ class CausalityAgent:
 
 
 # ca = CausalityAgent('./resources')
-#
+# print(ca.find_causality({'source': {'id':'KRAS'}, 'target': {'id': 'MAPK3'}}))
+
 # print(ca.find_mutex('TP53', 'BRCA'))
 # ca.db_initializer.populate_tables('./resources')
 # ca.db_initializer.populate_mutex_table('./resources')
