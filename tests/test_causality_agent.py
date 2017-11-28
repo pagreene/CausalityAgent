@@ -35,6 +35,25 @@ class TestCausalPath(_IntegrationTest):
         assert stmts[0].residue == 'S'
         assert stmts[0].position == '100'
 
+    def create_message_2(self):
+        source = ekb_kstring_from_text('ITGAV')
+        target = ekb_kstring_from_text('ILK')
+        content = KQMLList('FIND-CAUSAL-PATH')
+        content.set('source', source)
+        content.set('target', target)
+        msg = get_request(content)
+        return msg, content
+
+    def check_response_to_message_2(self, output):
+        assert output.head() == 'SUCCESS'
+        paths = output.gets('paths')
+        jd = json.loads(paths)
+        stmts = stmts_from_json(jd)
+        assert len(stmts) == 1
+        assert stmts[0].subj.name == 'ITGAV'
+        assert stmts[0].obj.name == 'ILK'
+
+
     def create_message_failure(self):
         source = ekb_kstring_from_text('MAPK3')
         target = ekb_kstring_from_text('TP53')
