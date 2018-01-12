@@ -1,7 +1,7 @@
 import json
 from kqml import KQMLList, KQMLString, KQMLPerformative
 from indra.statements import stmts_from_json
-from causality_sbgnviz_interface import _resource_dir
+from causality_module import _resource_dir
 import causality_agent
 from causality_module import CausalityModule
 from tests.integration import _IntegrationTest

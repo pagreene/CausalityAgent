@@ -335,7 +335,7 @@ class CausalityAgent:
             return upstream_list
 
 
-# ca = CausalityAgent('./resources')
+ca = CausalityAgent('./resources')
 # print(ca.find_causality({'source': {'id':'KRAS'}, 'target': {'id': 'MAPK3'}}))
 
 # print(ca.find_mutex('TP53', 'BRCA'))

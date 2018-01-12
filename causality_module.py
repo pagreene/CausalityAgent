@@ -176,6 +176,7 @@ class CausalityModule(Bioagent):
         return reply
 
     def respond_dataset_correlated_entity(self, content):
+        """Response content to find-database-correlated-entity request"""
         source_arg = content.gets('SOURCE')
         if not source_arg:
             return self.make_failure('MISSING_MECHANISM')
@@ -367,7 +368,6 @@ def make_indra_json(causality):
     s, t = ('2', '1') if 'IS' in causality['rel'] else ('1', '2')
     subj, obj = ('enz', 'sub') if 'PHOSPHO' in causality['rel'] else \
                 ('subj', 'obj')
-
 
     # if "PHOSPHO" in causality['rel']:  # phosphorylation
     indra_json = {'type': rel_type,
