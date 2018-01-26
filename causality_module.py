@@ -38,6 +38,7 @@ class CausalityModule(Bioagent):
 
         source_arg = content.gets('SOURCE')
         target_arg = content.gets('TARGET')
+        direction = content.gets('DIRECTION')
 
         if not source_arg:
             return self.make_failure('MISSING_MECHANISM')
@@ -56,7 +57,7 @@ class CausalityModule(Bioagent):
         target = {'id': target_name, 'pSite': ''}
         source = {'id': source_name, 'pSite': ''}
 
-        result = self.CA.find_causality({'source': source, 'target': target})
+        result = self.CA.find_causality({'source': source, 'target': target, 'direction':direction})
 
         if not result:
             return self.make_failure('NO_PATH_FOUND')

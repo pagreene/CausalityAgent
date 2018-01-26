@@ -106,6 +106,7 @@ class CausalityAgent:
             cur = self.cadb.cursor()
             sources = param.get('source').get('id')
             targets = param.get('target').get('id')
+            direction = param.get('direction')
 
             if isinstance(sources, list):
                 source_str = "(" + ", ".join((("'" + str(source) + "'") for source in sources)) + ")"
@@ -122,11 +123,18 @@ class CausalityAgent:
             rows = cur.execute(query).fetchall()
 
             if len(rows) > 0:
-                row = rows[0]
-                causality = self.row_to_causality(row)
-                return causality
-            else:
-                return ''
+                for row in rows:
+                    if direction.lower() == 'strict':  # return the first active row
+                        if 'is' not in row[4]:
+                            causality = self.row_to_causality(row)
+                            return causality
+                    else:  # return the first row
+                        causality = self.row_to_causality(row)
+                        return causality
+
+            return ''
+
+
 
     def find_causality_targets(self, param):
         """

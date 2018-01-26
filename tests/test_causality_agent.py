@@ -21,6 +21,8 @@ class TestCausalPath(_IntegrationTest):
         content = KQMLList('FIND-CAUSAL-PATH')
         content.set('source', source)
         content.set('target', target)
+        content.sets('direction', 'both')
+
         msg = get_request(content)
         return msg, content
 
@@ -41,6 +43,7 @@ class TestCausalPath(_IntegrationTest):
         content = KQMLList('FIND-CAUSAL-PATH')
         content.set('source', source)
         content.set('target', target)
+        content.sets('direction', 'both')
         msg = get_request(content)
         return msg, content
 
@@ -60,6 +63,7 @@ class TestCausalPath(_IntegrationTest):
         content = KQMLList('FIND-CAUSAL-PATH')
         content.set('source', source)
         content.set('target', target)
+        content.sets('direction', 'both')
         msg = get_request(content)
         return msg, content
 
@@ -74,6 +78,7 @@ class TestCausalPath(_IntegrationTest):
         content = KQMLList('FIND-CAUSAL-PATH')
         content.set('source', source)
         content.set('target', target)
+        content.sets('direction', 'both')
         msg = get_request(content)
         return msg, content
 
@@ -81,6 +86,22 @@ class TestCausalPath(_IntegrationTest):
         assert output.head() == 'FAILURE'
         reason = output.gets('reason')
         assert reason == 'NO_PATH_FOUND'
+
+    def create_message_failure_3(self):
+        source = ekb_kstring_from_text('BRAF')
+        target = ekb_kstring_from_text('MAPK1')
+        content = KQMLList('FIND-CAUSAL-PATH')
+        content.set('source', source)
+        content.set('target', target)
+        content.sets('direction', 'strict')
+        msg = get_request(content)
+        return msg, content
+
+    def check_response_to_message_failure_3(self, output):
+        assert output.head() == 'FAILURE'
+        reason = output.gets('reason')
+        assert reason == 'NO_PATH_FOUND'
+
 
 class TestCausalityTarget(_IntegrationTest):
     def __init__(self, *args):
