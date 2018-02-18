@@ -239,7 +239,7 @@ class TestNextCorrelation(_IntegrationTest):
         explainable = output.gets('explainable')
 
         assert target == 'PTPN1'
-        assert correlation == str(0.581061418186)
+        assert correlation.startswith('0.581061418186')
         assert explainable == 'explainable'
 
 
@@ -257,7 +257,7 @@ class TestNextCorrelation(_IntegrationTest):
         correlation = output.gets('correlation')
         explainable = output.gets('explainable')
         assert target == 'AGPS'
-        assert correlation == str(0.94999636806)
+        assert correlation.startswith('0.94999636806')
         assert explainable == 'unexplainable'
         time.sleep(1)
 
@@ -285,7 +285,7 @@ class TestNextCorrelation(_IntegrationTest):
         correlation = output.gets('correlation')
         explainable = output.gets('explainable')
         assert target == 'BRAF'
-        assert correlation == str(0.7610843243760473)
+        assert correlation.startswith('0.7610843243760473')
         assert explainable == 'explainable'
 
     def create_message_failure(self):
