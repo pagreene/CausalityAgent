@@ -1,5 +1,5 @@
 import re
-from database_initializer import DatabaseInitializer
+from .database_initializer import DatabaseInitializer
 
 
 class CausalityAgent:

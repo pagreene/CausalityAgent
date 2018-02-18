@@ -1,9 +1,9 @@
 import json
 from kqml import KQMLList, KQMLString, KQMLPerformative
 from indra.statements import stmts_from_json
-from causality_module import _resource_dir
-import causality_agent
-from causality_module import CausalityModule
+from causality_agent.causality_module import _resource_dir
+from causality_agent import causality_agent
+from causality_agent.causality_module import CausalityModule
 from tests.integration import _IntegrationTest
 from tests.util import ekb_kstring_from_text, ekb_from_text, get_request
 import time
