@@ -1,5 +1,5 @@
 import re
-from database_initializer import DatabaseInitializer
+from .database_initializer import DatabaseInitializer
 
 
 class CausalityAgent:
@@ -294,7 +294,7 @@ class CausalityAgent:
             mutex = {'group': [], 'score': str(round(group[len(group) - 1], 2))}
             for i in range(1, len(group) - 1):
                 if group[i] is not None:
-                    mutex['group'].append(group[i].encode('utf8'))
+                    mutex['group'].append(group[i])
             mutex_list.append(mutex)
 
         return mutex_list
@@ -338,7 +338,7 @@ class CausalityAgent:
             #format upstreams
             upstream_list = []
             for genes in upstreams:
-                upstream_list.append(str(genes[0]).encode('utf8'))
+                upstream_list.append(str(genes[0]))
 
             return upstream_list
 

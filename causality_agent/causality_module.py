@@ -3,7 +3,7 @@ import os
 import json
 import logging
 from bioagents import Bioagent
-from causality_agent import CausalityAgent
+from .causality_agent import CausalityAgent
 from indra.sources.trips.processor import TripsProcessor
 from kqml import KQMLModule, KQMLPerformative, KQMLList, KQMLString, KQMLToken
 
