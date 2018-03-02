@@ -124,7 +124,7 @@ class CausalityAgent:
 
             if len(rows) > 0:
                 for row in rows:
-                    if direction.lower() == 'strict':  # return the first active row
+                    if direction and direction.lower() == 'strict':  # return the first active row
                         if 'is' not in row[4]:
                             causality = self.row_to_causality(row)
                             return causality
